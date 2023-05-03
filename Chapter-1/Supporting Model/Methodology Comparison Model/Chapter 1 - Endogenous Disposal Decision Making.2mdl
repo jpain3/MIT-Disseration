@@ -1,0 +1,2493 @@
+{UTF-8}
+Trapezoidal Initial Average Age of Units Under Development=
+	0.5*B Minimum Age at Full Value+0.5*C Maximum Age at Full Value
+	~	Week
+	~	For the Trapezoidal Age-Value relationship. The initial steady state value \
+		of the age of the unit under development. Under steady state conditions, \
+		this should correspond to an age under which the producer can expect to \
+		receive the full value of its finsihed goods. For simplisity, here it is \
+		assumed to be at the midpoint of the stable planteau of the trapezoidal \
+		distribution of unit value used in this model.
+	|
+
+Total Cummulative Realized Costs= INTEG (
+	Producer Realized Costs,
+		0)
+	~	$
+	~	For reporting purposes: The total actually realized costs accumulated by \
+		the producer over the simulation
+	|
+
+Total Cummulative Revenue= INTEG (
+	Producer Revenue,
+		0)
+	~	$
+	~	For reporting purposes: The total revenue accumulated by the producer over \
+		the simulation
+	|
+
+Producer Realized Costs=
+	Producer Cost to Destory Inventory*Disposal of Producer Finished Goods Inventory+Producer Cost to Dispose of or Abandon WIP
+	*Disposal of Units under Development+Producer Cost to Place in FG State*FG Production\
+		+Producer Raw Material Costs*Production Starts+Producer Shipping Costs
+	*Shipping to Customer+WIP Development Costs*"Units under Development (WIP)"
+	~	$/Week
+	~	For reporting purposes: The instantaneous actually realized costs incurred \
+		by the producer
+	|
+
+Disposal of Producer Finished Goods Inventory=
+	"SW - Logistic Choice Model in FG"*Desired Inventory to Dispose of/Producer finished goods disposal time
+	~	Unit/Week
+	~	The purposeful disposal of finished goods unit being stored by the \
+		producer. This occurs as a result of comparing the estimated economic \
+		value of disposing versus shipping to the customer versus keeping the unit \
+		in storage for a longer period of time.
+	|
+
+Producer Allocated Costs=
+	Shipping to Customer*Producer Unit Profit
+	~	$/Week
+	~	For reporting purposes: The instantaneous allocated costs assinged to the \
+		units sold by the producer
+	|
+
+Producer Revenue=
+	Shipping to Customer*Producer Spot Price
+	~	$/Week
+	~	For reporting purposes: The instantaneous revenue earned by the producer \
+		for units sold to the customer
+	|
+
+Total Producer Profit=
+	Total Cummulative Revenue-Total Cummulative Realized Costs
+	~	$
+	~	For reporting purposes: The total profit accumulated by the producer over \
+		the simulation
+	~	:SUPPLEMENTARY 
+	|
+
+Producer Observed Fully Allocated Gross Margin=
+	xidz((Producer Spot Price-Producer Observed Mixed Variable Costs),Producer Spot Price\
+		,-1e+20)
+	~	Dmnl
+	~	For Reporting Purposes: The experienced gross margin from selling a unit. \
+		Note that this assumes a fully allocated costing method for goods sold.
+	~	:SUPPLEMENTARY 
+	|
+
+Total Cummulative Allocated Costs= INTEG (
+	Producer Allocated Costs,
+		0)
+	~	$
+	~	For reporting purposes: The total fully allocated costs accumulated by the \
+		producer over the simulation
+	~	:SUPPLEMENTARY 
+	|
+
+"SW - Logistic Choice Model in FG"=
+	1
+	~	Dmnl [0,1,1]
+	~	Switch used when comparing modeling methodologies. When set to 1, then the \
+		model uses the logistic choice framework to allow the producer to make the \
+		decision each period on if it is economcially advantagous to continue to \
+		hold finished goods versus disposing of those goods. If this switch is set \
+		to 0, then all FG inventory is held until used to fill customer demand, or \
+		allowed to either decay or depreciate.
+	|
+
+Total Loss of Production=
+	Decay of Producer Stored Goods+Disposal of Units under Development+Disposal of Producer Finished Goods Inventory
+	~	Unit/Week
+	~	For reporting purposes: The total loss of production starts to either \
+		purposeful disposal or to decay (or obsolecence)
+	~	:SUPPLEMENTARY 
+	|
+
+Producer Unit Profit=
+	Producer Spot Price-Producer Observed Mixed Variable Costs
+	~	$/Unit
+	~	For reporting purposes: The weighted average profit for a unit sold. Note \
+		that this uses a fully allocated costing method that assigns costs from \
+		upstream losses to each unit that makes it to final sale
+	|
+
+Initial Disposal of Producer Inventory=
+	"SW - Logistic Choice Model in FG"*Initial Producer Inventory*Initial Fraction of Inventory Disposed\
+		/Producer finished goods disposal time
+	~	Unit/Week
+	~	The initial steady state disposal of stored producer inventory expected \
+		given the cost structure of they system. Used to both set the system in an \
+		initial steady state condition by establishing an initial, or reference, \
+		level of needed producer production starts, and to help establish limits \
+		on the feasible processing times for production activities in the producer.
+	|
+
+Linear Effect of unit Age on Producer Price=
+	IF THEN ELSE("Linear - Minimum Age of Any Value"="Linear - Age of Full Value",IF THEN ELSE\
+		(Average Age of Units under Development<"Linear - Age of Full Value",0,1),
+	
+	IF THEN ELSE("Linear - Minimum Age of Any Value"<=Average Age of Units under Development\
+		 :AND: Average Age of Units under Development
+	<"Linear - Age of Full Value",
+	(Average Age of Units under Development-"Linear - Minimum Age of Any Value")/("Linear - Age of Full Value"\
+		-"Linear - Minimum Age of Any Value"
+	),
+	
+	  IF THEN ELSE(Average Age of Units under Development>="Linear - Age of Full Value",\
+		1,
+	
+	
+	0)))
+	~	Dmnl
+	~	A linear and saturating effect of the age (or total development or \
+		maturation time) of unit under development on the price the unit is able \
+		to get. At the ages corresponding to maximum value, the unit will get the \
+		full spot price the market expects. If the minimum and maximum ages are \
+		the same, this is a step increase in value multiplier from 0 to 1
+	|
+
+Linear Expected Price of Selling Unit Held Beyond Current Age=
+	IF THEN ELSE (Average Age of Units under Development<="Linear - Age of Full Value","Producer Short-Run Expected Price"
+	,"Producer Short-Run Expected Price"
+	*Linear Effect of unit Age on Producer Price - max(0,WIP Development Costs*(Average Age of Units under Development\
+		-Linear Initial Average Age of Units Under Development
+	))
+	)
+	~	$/Unit
+	~	For the logistic age-value relationship. A simple forward-looking \
+		estimation of the value of holding unit under development beyond the \
+		current age (or maturation). If the unit is younger than the typical \
+		developmenttime (at which the producer can expect to receive the full spot \
+		price), then the producer can expect that holding the unit will yeild that \
+		full spot price in the future. Otherwise, producer can only expect to \
+		receive whatever the expected spot price influenced by the current age \
+		would be.
+	|
+
+Linear Initial Average Age of Units Under Development=
+	"Linear - Age of Full Value"
+	~	Week
+	~	For the linearc Age-Value relationship. The initial steady state value of \
+		the age of the unit under development. Under steady state conditions, this \
+		should correspond to an age under which the producer can expect to receive \
+		the full value of its finsihed goods. For simplisity, here it is assumed \
+		to be at the time in which the full value is received
+	|
+
+Producer Observed Mixed Variable Costs=
+	IF THEN ELSE(Production Starts<1e-06,Reference Mixed Variable Costs,(Disposal of Units under Development\
+		/Production Starts
+	)*Producer Variable Cost for Disposed Crops
+	+(Disposal of Producer Finished Goods Inventory/Production Starts)*Producer Variable Cost for Disposed Finished Goods\
+		+
+	(1-(Disposal of Units under Development+Disposal of Producer Finished Goods Inventory
+	)/Production Starts)*Producer Variable Costs for Sold Goods+Producer WIP Development Variable Costs\
+		)
+	~	$/Unit
+	~	The average variable costs per unit production started that the the \
+		producer observes in a given period of time. This is a weighted average of \
+		the variable costs incurred from each possble disposition route of a unit.
+	|
+
+Trapezoidal Expected Price of Selling Unit Held Beyond Current Age=
+	IF THEN ELSE (Average Age of Units under Development<=B Minimum Age at Full Value,"Producer Short-Run Expected Price"\
+		,"Producer Short-Run Expected Price"
+	*Trapezoidal Effect of Unit Age on Producer Price - max(0,WIP Development Costs*(Average Age of Units under Development
+	-Trapezoidal Initial Average Age of Units Under Development))
+	)
+	~	$/Unit
+	~	For the trapezoidal age-value relationship. A simple forward-looking \
+		estimation of the value of holding unit under development beyond the \
+		current age (or maturation). If the unit is younger than the minimum age \
+		at which the producer can expect to receive the full spot price, then the \
+		producer can expect that holding the unit will yeild that full spot price \
+		in the futre. Otherwiste, producer can only expect to receive whatever the \
+		expected spot price influenced by the current age would be.
+	|
+
+Asymmetric Gaussian Expected Price of Selling Unit Held Beyond Current Age=
+	IF THEN ELSE (Average Age of Units under Development<=Ideal Development Time,"Producer Short-Run Expected Price"\
+		,"Producer Short-Run Expected Price"
+	*Asymmetric Gaussian Effect of unit Age on Producer Price- max(0,WIP Development Costs\
+		*(Average Age of Units under Development
+	-Asymmetric Gaussian Initial Average Age of Units Under Development))
+	)
+	~	$/Unit
+	~	For the asymmetric gaussian age-value relationship. A simple \
+		forward-looking estimation of the value of holding unit under development \
+		beyond the current age (or maturation). If the unit is younger than the \
+		ideal maturaion time (at which the producer can expect to receive the full \
+		spot price), then the producer can expect that holding the unit will yeild \
+		that full spot price in the future. Otherwise, producer can only expect to \
+		receive whatever the expected spot price influenced by the current age \
+		would be.
+	|
+
+Reference Mixed Variable Costs=
+	(Initial Destruction of WIP/Producer Reference Production)*Producer Variable Cost for Disposed Crops\
+		+(Initial Disposal of Producer Inventory
+	/Producer Reference Production)*Producer Variable Cost for Disposed Finished Goods+(\
+		1-(Initial Destruction of WIP+Initial Disposal of Producer Inventory
+	)/Producer Reference Production)*Producer Variable Costs for Sold Goods+Reference Development Variable Costs
+	~	$/Unit
+	~	The mixed average variable cost per unit production starts that the \
+		producer incurs at the initial, steady state, condition of the system.
+	|
+
+Producer WIP Development Variable Costs=
+	Average Age of Units under Development*WIP Development Costs
+	~	$/Unit
+	~	Total tdevelopment costs that are incurred for holding a unit in the WIP \
+		state for the current time that goods are aging. Cost is incurred for all \
+		WIP regardless of disposition
+	|
+
+"Linear - Minimum Age of Any Value"=
+	4
+	~	Weeks
+	~	In the linear staurating model of the relationship between the value of \
+		unit in WIP and its age of development (or maturation), this is the \
+		minimum age below which the unit is assumed to have no value.
+	|
+
+WIP Development Costs=
+	0.01
+	~	$/Unit/Week
+	~	Cost of developing a single unit of productions starts for a single unit \
+		of time that the producer endures
+	|
+
+Reference Development Variable Costs=
+	Initial Average Age of Units under Development*WIP Development Costs
+	~	$/Unit
+	~	Total typical, and initial, development costs that are incurred for \
+		holding a unit in the WIP state.
+	|
+
+"Linear - Age of Full Value"=
+	10
+	~	Weeks
+	~	In the linear saturating model of the relationship between the value of \
+		units under development and its age of development (or maturation), this \
+		is the minimum age at which the unit is assumed to be able to sold at full \
+		market value.
+	|
+
+"Lower Price-Value St Dev"=
+	6
+	~	Weeks
+	~	In the gaussian model of the relationship between the value of units under \
+		development and its age of development (or maturation), this is the \
+		standard deviation of the lower portion of the curve, used when \
+		development time is less than the peak or ideal time.
+	|
+
+Null Assumed Ideal WIP Development Time=
+	12
+	~	Week
+	~	Used when no price-value relationship is specified. This is used to \
+		initialize the ammount of time that new production starts are in a work in \
+		progress (WIP) state.
+	|
+
+Asymmetric Gaussian Effect of unit Age on Producer Price=
+	exp((-1/2)*((Average Age of Units under Development-Ideal Development Time)/
+	
+	
+	IF THEN ELSE(Average Age of Units under Development<Ideal Development Time, "Lower Price-Value St Dev"\
+		 , "Upper Price-Value St Dev" )
+	
+	
+	)^2)
+	~	Dmnl
+	~	Asymmetric gaussian effect of the age (or total development or maturation \
+		time) of unit under development on the price the unit is able to get. At \
+		the ages corresponding to maximum value, the unit will get the full spot \
+		price the market expects.
+	|
+
+Asymmetric Gaussian Initial Average Age of Units Under Development=
+	Ideal Development Time
+	~	Week
+	~	For the Asymmetric gaussian Age-Value relationship. The initial steady \
+		state value of the age of the unit under development. Under steady state \
+		conditions, this should correspond to an age under which the producer can \
+		expect to receive the full value of its finsihed goods. For simplisity, \
+		here it is assumed to be at the maximum of gaussian distribution of unit \
+		value used in this model.
+	|
+
+Trapezoidal Effect of Unit Age on Producer Price=
+	IF THEN ELSE(A Minimum age of any Value<=Average Age of Units under Development :AND:\
+		 Average Age of Units under Development
+	<B Minimum Age at Full Value,
+	(Average Age of Units under Development-A Minimum age of any Value)/(B Minimum Age at Full Value\
+		-A Minimum age of any Value
+	),
+	IF THEN ELSE (B Minimum Age at Full Value<=Average Age of Units under Development :AND:\
+		 Average Age of Units under Development
+	<C Maximum Age at Full Value,
+	1,
+	IF THEN ELSE(C Maximum Age at Full Value<=Average Age of Units under Development :AND:\
+		 Average Age of Units under Development
+	<D Maximum age of any Value,
+	(D Maximum age of any Value-Average Age of Units under Development)/(D Maximum age of any Value\
+		-C Maximum Age at Full Value
+	),
+	0
+	)))
+	~	Dmnl
+	~	Trapezoidal effect of the age (or total development or maturation time) of \
+		unit under development on the price the unit is able to get. At the ages \
+		corresponding to maximum value, the unit will get the full spot price the \
+		market expects.
+	|
+
+"Upper Price-Value St Dev"=
+	24
+	~	Weeks
+	~	In the gaussian model of the relationship between the value of unit under \
+		development and its age of development (or maturation), this is the \
+		standard deviation of the upper portion of the curve, used when \
+		development time is greatter than the peak or ideal time.
+	|
+
+Ideal Development Time=
+	12
+	~	Weeks
+	~	In the gaussian model of the relationship between the value of unit under \
+		development and its age of development (or maturation), this is the peak \
+		of that curve. I.e. the age at which the unit is assumed to be able to \
+		sold at full market value.
+	|
+
+Effect of Unit Age on Producer Price=
+	IF THEN ELSE("SW - Age Value Relationship"=0, 1,
+	
+	     IF THEN ELSE("SW - Age Value Relationship"=1, Trapezoidal Effect of Unit Age on Producer Price\
+		 , 
+	
+	
+	         IF THEN ELSE("SW - Age Value Relationship"=2, Asymmetric Gaussian Effect of unit Age on Producer Price\
+		 , 
+	
+	
+	Linear Effect of unit Age on Producer Price)))
+	~	Dmnl
+	~	Effect of the age (or total development or maturation time) of unit under \
+		development on the price the unit is able to get.
+	|
+
+Expected Price of Selling Unit Held Beyond Current Age=
+	IF THEN ELSE("SW - Age Value Relationship"=0, "Producer Short-Run Expected Price",
+	
+	     IF THEN ELSE("SW - Age Value Relationship"=1, Trapezoidal Expected Price of Selling Unit Held Beyond Current Age\
+		 ,
+	 
+	
+	
+	         IF THEN ELSE("SW - Age Value Relationship"=2, Asymmetric Gaussian Expected Price of Selling Unit Held Beyond Current Age
+	 , 
+	
+	
+	Linear Expected Price of Selling Unit Held Beyond Current Age)))
+	~	$/Unit
+	~	A simple forward-looking estimation of the value of holding unit under \
+		development beyond the current age (or maturation). If the unit is younger \
+		than the minimum age at which the producer can expect to receive the full \
+		spot price, then the producer can expect that holding the unit will yeild \
+		that full spot price in the futre. Otherwiste, producer can only expect to \
+		receive whatever the expected spot price influenced by the current age \
+		would be.
+	|
+
+Initial Average Age of Units under Development=
+	IF THEN ELSE("SW - Age Value Relationship"=0, Null Assumed Ideal WIP Development Time\
+		,
+	
+	     IF THEN ELSE("SW - Age Value Relationship"=1, Trapezoidal Initial Average Age of Units Under Development\
+		 , 
+	
+	
+	         IF THEN ELSE("SW - Age Value Relationship"=2, Asymmetric Gaussian Initial Average Age of Units Under Development
+	 , 
+	
+	
+	Linear Initial Average Age of Units Under Development)))
+	~	Week
+	~	The initial steady state value of the age of the unit under development. \
+		Under steady state conditions, this should correspond to an age under \
+		which the producer can expect to receive the full value of its finsihed \
+		goods. For simplisity, here it is assumed to be at the midpoint of the \
+		stable planteau of the trapezoidal distribution of unit value used in this \
+		model.
+	|
+
+"SW - Age Value Relationship"=
+	1
+	~	Dmnl [0,3,1]
+	~	Switch used when comparing modeling methodologies. If this switch is set \
+		to 0, then the current average age or development time of WIP goods does \
+		not affect the spot price that the producer can expect to receive for \
+		those goods once moved into a finished goods state. When set to 1, then \
+		the model uses the Trapezoidal relationship between WIP development time \
+		or age and the affect on the spot price of the goods. When set to 2, the \
+		asymmetric gaussian is used
+	|
+
+Initial Fraction of Units Disposed=
+	"SW - Logistic Choice Model in WIP"*(exp(Expected Value of Disposing Units)/(exp(Expected Value of Disposing Units\
+		)+exp(Initial Value of Harvesting)+exp((
+	1-"SW - Neutral Value for Holding WIP")*Initial Value of Harvesting
+	)))
+	~	Dmnl
+	~	The initial fraction of the units under development that the producer \
+		would want to dispose of, given the cost structure of the system. This is \
+		used to initialize the system in a steady state condition.
+	|
+
+FG Production=
+	"SW - Logistic Choice Model in WIP"*min(1,Maximum Production Rate/Expected Needed Production\
+		)*Expected Needed Production + (1-
+	"SW - Logistic Choice Model in WIP")*Fixed Delay Production
+	~	Units/Week
+	~	The act of stoping further development (or aging) of unit for removal to \
+		finished goods storage, for the eventual later shipment to a customer \
+		customer or later disposal.
+	|
+
+Producer finished goods disposal time=
+	4
+	~	Week
+	~	Time, on average, for the producer to dispose of stock of finished goods \
+		awaiting shipment to the customer
+	|
+
+"SW - Logistic Choice Model in WIP"=
+	1
+	~	Dmnl [0,1,1]
+	~	Switch used when comparing modeling methodologies. When set to 1, then the \
+		model uses the logistic choice framework to allow the producer to make the \
+		decision each period on if it is economcially advantagous to continue to \
+		develop WIP goods versus disposing of those goods. If this switch is set \
+		to 0, then all production starts are eventually moved into a FG state
+	|
+
+Decay of Producer Stored Goods=
+	Producer Finished Goods Inventory/Average Shelf Life of Producer Stored Goods
+	~	Unit/Week
+	~	Loss of stored goods in the producer due to decay that are sitting in \
+		storage awaiting shipping to the customer.
+	|
+
+Initial Destruction of WIP=
+	Initial Units under Development*Initial Fraction of Units Disposed/Producer Processing Time
+	~	Unit/Week
+	~	The initial steady state disposal of units expected given the cost \
+		structure of they system. Used to both set the system in an initial steady \
+		state condition and help establish a reference level of producer \
+		production starts.
+	|
+
+Fixed Delay Production=
+	DELAY3(Production Starts, Initial Average Age of Units under Development)
+	~	Unit/Week
+	~	The movement of WIP material into a finished goods state under the \
+		assumption that all production starts are ultimatley completed and moved \
+		into the FG stock. This is used for comparison with the logistic choice \
+		modeling methodology used eslewhere in the model.
+	|
+
+Disposal of Units under Development=
+	("SW - Logistic Choice Model in WIP")*Desired Units to Dispose of/Producer Processing Time
+	~	Unit/Week
+	~	The purposeful disposal of unit under development by the producer. This \
+		occurs as a result of comparing the estimated economic value of disposing \
+		versus moving to finished goods versus keeping the unit under development.
+	|
+
+Customer Ramp Demand Change Time Horizon=
+	8
+	~	Week
+	~	Scenario input only: The ammount of time the underlying demand in the \
+		scenario ramps from the initial value ot the final value.
+	|
+
+Final Fraction of Original Customer Purchasing Power=
+	0.5
+	~	Dmnl
+	~	Scenario input only: The final underlying fraction of purchasing power the \
+		consumer maintains in the scenario. Values between 0 and 1 represent a \
+		drop in purchasing power. Values above 1 represent an increase in \
+		purchasing power.
+	|
+
+Start Time of Customer Pulse Demand Change=
+	10
+	~	Week
+	~	Scenario Input Only: Time at which the pulse in demand begins
+	|
+
+"Scenario - Pulse in Customer Demand"=
+	1+Size of Customer Pulse Demand Change*PULSE( Start Time of Customer Pulse Demand Change\
+		 , End Time of Customer Pulse Demand Change-Start Time of Customer Pulse Demand Change\
+		 )
+	~	Dmnl
+	~	Scenario input only: The change in underlying demand in customer \
+		consumption over the course of a scenario from a pulse change in demand
+	|
+
+End Time of Customer Pulse Demand Change=
+	50
+	~	Week
+	~	Scenario Input Only: Time at which the pulse in demand returns back to \
+		100% of original purchasing power
+	|
+
+"SW - Switch for Ramp Change in Customer Purchases"=
+	0
+	~	Dmnl [0,1,1]
+	~	Switch for exognous scenario: The switch to instigate when underlying \
+		purchasing power customers changes
+	|
+
+"SW - Switch for Pulse in Customer Purchases"=
+	0
+	~	Dmnl [0,1,1]
+	~	Switch for exognous scenario: The switch to instigate when underlying \
+		purchasing power of Customer customers changes, here by stepping down and \
+		then back up for after a time.
+	|
+
+Underlying Customer Demand=
+	max(0,("SW - Switch for Pulse in Customer Purchases"*"Scenario - Pulse in Customer Demand"\
+		+(1-"SW - Switch for Pulse in Customer Purchases")*1)*Reference Consumer Demand
+	+"SW - Switch for Ramp Change in Customer Purchases"*
+	"Scenario - Ramp in Customer Demand")
+	~	Unit/Week
+	~	Reference Customer consumer demand incorporating the various exogenous \
+		shocks introduced by the scenarios
+	|
+
+Size of Customer Pulse Demand Change=
+	0.5
+	~	Dmnl
+	~	Scenario Input Only: The size (relative to 100%) of the pulse in the \
+		underlying demand from the customer. A value of 0.25 corresponds to a 25% \
+		increase in underlying purchasing power dedicated to this channel
+	|
+
+Time of Customer Ramp Demand Change=
+	8
+	~	Week
+	~	Scenario input only: The time in the simulation (in weeks) that the \
+		scenario starts
+	|
+
+"Scenario - Ramp in Customer Demand"=
+	RAMP(((Final Fraction of Original Customer Purchasing Power-1)*Reference Consumer Demand\
+		)/Customer Ramp Demand Change Time Horizon
+	,Time of Customer Ramp Demand Change
+	,Time of Customer Ramp Demand Change+Customer Ramp Demand Change Time Horizon)
+	~	Unit/Week
+	~	Scenario input only: The change in underlying demand in customer \
+		consumption over the course of a scenario
+	|
+
+Producer Shipping Time=
+	1
+	~	Week
+	~	The limiting minimum time that goods must spend in storage at the \
+		producer. This is the minimum time for the producer to get finished goods \
+		picked and packed to ship to the customer
+	|
+
+Producer Processing Time=
+	4
+	~	Weeks
+	~	The desired typical time it takes for the producer to process goods, \
+		either by disposing of them or moving them along into finished goods \
+		inventory.
+	|
+
+Indicated Customer Demand=
+	Effect of Producer Price on Customer Demand*Underlying Customer Demand
+	~	Unit/Week
+	~	This combines the effects of anticipated Gross Maring expected by the \
+		customer and the instantaneous spot price experienced by the customer to \
+		affect its demand. Higher expected gross margin increases demand, while \
+		higher experienced prices lower demand. There is a swith here to \
+		investigate only the Gross Margin affect alone for model testing purposes.
+	|
+
+Initial Value of Harvesting=
+	(REFERENCE PRODUCER PRICE-Producer Cost to Place in FG State-Producer Shipping Costs\
+		)/REFERENCE PRODUCER PRICE
+	~	Dmnl
+	~	The initial value of the act of moving to finished goods. Used to \
+		initialize the system in a steady state condition
+	|
+
+Initial Value of Shipping=
+	(REFERENCE PRODUCER PRICE-Producer Shipping Costs)/REFERENCE PRODUCER PRICE
+	~	Dmnl
+	~	The initial value of the act of making inventory avialable to ship from \
+		the producer to the customer. Used to initialize the system in a steady \
+		state condition
+	|
+
+Expected Value of Disposing of Inventory=
+	(-Producer Cost to Destory Inventory)/REFERENCE PRODUCER PRICE
+	~	Dmnl
+	~	The normalized economic value of disposing a unit in the producer stroage, \
+		making it avaialable for shipping to the customer or allowing it to stay \
+		in storage
+	|
+
+Age Loss from WIP Destruction=
+	Average Age of Units under Development*(Disposal of Units under Development)
+	~	Unit
+	~	Reduction in the total age of unit under development from the removal of \
+		that unit from the stock under development due to purposeful disposal of \
+		units under development
+	|
+
+Expected Needed Production=
+	SMOOTH(Decay of Producer Stored Goods+Disposal of Producer Finished Goods Inventory+\
+		Customer Demand,Time for Producer to update Expected Production Needed)
+	~	Unit/Week
+	~	The first-order smoothed expected needed production rate that the producer \
+		must maintain in order to meet historically observed demand from customers \
+		(inclusive of other losses such as decay and shrink, if applicable).
+	|
+
+Producer Customer Expected Price= INTEG (
+	Change in Producer Customer Expected Price,
+		REFERENCE PRODUCER PRICE)
+	~	$/Unit
+	~	The price the producer customer expects it will be charged when buying \
+		goods in the near-run (ie its expected variable costs)
+	|
+
+Expected Value of Continuing Development=
+	(1-"SW - Neutral Value for Holding WIP")*(Expected Price of Selling Unit Held Beyond Current Age\
+		-Producer Cost to Place in FG State
+-Producer Shipping Costs
+	)/REFERENCE PRODUCER PRICE
+	~	Dmnl
+	~	The normalized economic value of allowing a unit to continue to develop in \
+		a WIP state. Used in the logistic choice model for the producer deciding \
+		between disposing, moving to finished goods, or continuing to develop the \
+		units.
+	|
+
+Expected Value of Disposing Units=
+	-Producer Cost to Dispose of or Abandon WIP/REFERENCE PRODUCER PRICE
+	~	Dmnl
+	~	The normalized economic value of disposing a unit under development. Used \
+		in the logistic choice model for the producer deciding between disposing, \
+		moving to finished goods, or continuing to develop the units.
+	|
+
+Producer Reference Variable GM at Reference Production=
+	(REFERENCE PRODUCER PRICE-Reference Mixed Variable Costs)/REFERENCE PRODUCER PRICE
+	~	Dmnl
+	~	The Gross Margin corresponding to the reference production rate for the \
+		producer
+	|
+
+Expected Value of Moving to Finished Goods=
+	("Producer Short-Run Expected Price"-Producer Cost to Place in FG State-Producer Shipping Costs\
+		)/REFERENCE PRODUCER PRICE
+	~	Dmnl
+	~	The normalized economic value of moving to finished goods a unit under \
+		culivation. Used in the logistic choice model for the producer deciding \
+		between disposing, moving to finished goods, or continuing to develop the \
+		units in a WIP state.
+	|
+
+"Producer Short-Run Expected Price"= INTEG (
+	"Change in Producer Short-Run Expected Price",
+		REFERENCE PRODUCER PRICE)
+	~	$/Unit
+	~	The price the producer expects it will be able to sell its goods for in \
+		the near-run
+	|
+
+Reference Consumer Demand=
+	100
+	~	Units/Week
+	~	The underlying demand of the Customer at the reference spot prices (which \
+		affect reference gross margins) and desired inventory coverage values
+	|
+
+Expected Value of Shipping to Customer=
+	(Producer Spot Price-Producer Shipping Costs)/REFERENCE PRODUCER PRICE
+	~	Dmnl
+	~	The normalized economic value of making a unit available ot ship to the \
+		customer, versus disposing it or allowing it to stay in storage.
+	|
+
+Producer Finished Goods Inventory= INTEG (
+	FG Production-Decay of Producer Stored Goods-Disposal of Producer Finished Goods Inventory\
+		-Shipping to Customer,
+		Initial Producer Inventory)
+	~	Units
+	~	The unit the producer has that has fully grown or matured and is ready for \
+		sale to the customer
+	|
+
+Customer Demand Curve Slope=
+	-(Reference Consumer Demand*Elasticity of Customer Demand)/REFERENCE PRODUCER PRICE
+	~	Unit*Unit/($*Week)
+	~	Modeled in a manner to that shown in section 20.2.5 of Business Dynamics, \
+		specifically expression 20-37. This is the slope of the demand curve given \
+		an elasticity that exists at the reference demand and price.
+	|
+
+Effect of Producer Price on Customer Demand=
+	max(0,1+Customer Demand Curve Slope*(Producer Spot Price-REFERENCE PRODUCER PRICE)/Reference Consumer Demand\
+		)
+	~	Dmnl
+	~	Modeled in a manner to that shown in section 20.2.5 of Business Dynamics, \
+		specifically expressions 20-36 and 20-37. This assumes a negative linear \
+		relationship between spot price and resulting demand, with a slope defined \
+		by the elasticity at the reference demand and refrence price
+	|
+
+"Units under Development (WIP)"= INTEG (
+	Production Starts-Disposal of Units under Development-FG Production,
+		Initial Units under Development)
+	~	Units
+	~	Unit that is currently growing, or maturing. The stock could be more \
+		direclty named 'unit in the ground' to conceptualize as planting and \
+		moving to finished goods, but this could also apply to growing animals or \
+		similar unit generation processes.
+	|
+
+A Minimum age of any Value=
+	4
+	~	Weeks
+	~	In the trapezoidal model of the relationship between the value of unit in \
+		WIP and its age of development (or maturation), this is the minimum age \
+		underwhich the unit is assumed to have no value.
+	|
+
+Additional Age Gain from New Production=
+	Production Starts*Avg Age of New Units
+	~	Unit
+	~	The addition of total maturation time to the stock of work in progress \
+		that comes from a brand new production start (planting or gestation or \
+		similar start of unit production).
+	|
+
+Age Loss from FG Production=
+	Average Age of Units under Development*(FG Production)
+	~	Unit
+	~	Reduction in the total age of unit under development from the removal of \
+		that unit from the stock under development to the finished goods storage \
+		stock
+	|
+
+Available Production Capacity=
+	100
+	~	Hectares
+	~	Initial production capital that the producer owns. Here conceptualized in \
+		terms of hectares of arable land for simplisity of presentation.
+	|
+
+Average Age of Units under Development=
+	zidz(Total Age of Units under Development,"Units under Development (WIP)")
+	~	Week
+	~	The age, on average, that unit has been under development in the stock \
+		'Units under Development'
+	|
+
+Average Producer Capacity Yield=
+	Producer Reference Production/Normal Producer Capacity Utilization/Available Production Capacity
+	~	Unit/Week/Hectare
+	~	The yield, on average, that the producer is able to extract from owned \
+		production capacity. The calculated yeild needed to maintain equilibrium \
+		under the initial values of prices, costs, and owned production capacity \
+		by the producer.
+	|
+
+Average Shelf Life of Producer Stored Goods=
+	26
+	~	Weeks
+	~	The average time the unit that has been moved to a finished goods state, \
+		but is still being stored at the producer, can sit in strorage before \
+		spoiling and being disposed of. For non-foodstuffs this could be an \
+		average obsolecence time
+	|
+
+Avg Age of New Units=
+	0
+	~	Weeks
+	~	The average maturation of brand new production starts. Generally, this \
+		should be assumed to be 0, when starting from a seed or similar baseline. \
+		When planting crops, this could be the 'Average Maturation of a New \
+		Planting'. Again, this would be expected to be 0 here but would not \
+		necessarily have to be (for example if a producer purchased fully mature \
+		fruiting trees).
+	|
+
+B Minimum Age at Full Value=
+	10
+	~	Weeks
+	~	In the trapezoidal model of the relationship between the value of unit \
+		under development and its age of development (or maturation), this is the \
+		minimum age at which the unit is assumed to be able to sold at full market \
+		value.
+	|
+
+C Maximum Age at Full Value=
+	14
+	~	Weeks
+	~	In the trapezoidal model of the relationship between the value of unit \
+		under development and its age of development (or maturation), this is the \
+		maximum age at which the unit is assumed to be able to sold at full market \
+		value. Above this age, it is assumed the unit will be sold at less than \
+		full market value.
+	|
+
+Capacitiy Utilization=
+	NORMAL CDF ((Producer Variable GM Ratio-Mean of Capacity Utilization CDF)/St Dev of Capacity Utilization CDF\
+		)
+	~	Dmnl
+	~	Fraction of the production capacity (arable land in the case of planting \
+		as an example) owned by the producer that is actually put to use producing \
+		unit.
+	|
+
+Change in Producer Customer Expected Price=
+	(Producer Spot Price-Producer Customer Expected Price)/Time to Adjust Producer Customer Expected Price
+	~	$/Unit/Week
+	~	Rate of change in the expected producer price by the producer customer \
+		(here the customer) given the experienced spot price and updating time
+	|
+
+"Change in Producer Short-Run Expected Price"=
+	(Producer Spot Price-"Producer Short-Run Expected Price")/"Time for Producer to Adjusted Short-Run Expected Price"
+	~	$/(Week*Unit)
+	~	Rate of change in the expected producer price by the Producerer given the \
+		experienced producer price and updating time
+	|
+
+D Maximum age of any Value=
+	30
+	~	Weeks
+	~	In the trapezoidal model of the relationship between the value of unit \
+		under development and its age of development (or maturation), this is the \
+		maximum age that the unit is assumed to have any value. At and above this \
+		age the unit is assumed to have zero value if sold.
+	|
+
+Desired Units Fraction Disposed=
+	exp(Expected Value of Disposing Units)/(exp(Expected Value of Disposing Units)+exp(Expected Value of Moving to Finished Goods\
+		)+exp(Expected Value of Continuing Development))
+	~	Dmnl
+	~	The fraction of the units under development that the producer would want \
+		to dispose of, given the cost structure of the system.
+	|
+
+Desired Units Fraction Held in WIP=
+	exp(Expected Value of Continuing Development)/(exp(Expected Value of Disposing Units\
+		)+exp(Expected Value of Moving to Finished Goods)+exp(Expected Value of Continuing Development\
+		))
+	~	Dmnl
+	~	The fraction of the units under development that the producer would want \
+		to continue to develop, given the cost structure of the system.
+	~	:SUPPLEMENTARY 
+	|
+
+Desired Units Fraction to Move to FG=
+	exp(Expected Value of Moving to Finished Goods)/(exp(Expected Value of Disposing Units\
+		)+exp(Expected Value of Moving to Finished Goods)+exp(Expected Value of Continuing Development\
+		))
+	~	Dmnl
+	~	The fraction of the units under development that the producer would want \
+		to make available as Finished Goods, given the cost structure of the \
+		system.
+	|
+
+Desired Units to Dispose of=
+	"Units under Development (WIP)"*Desired Units Fraction Disposed
+	~	Unit
+	~	Given the desired unit fraction disposed of and the current unit under \
+		development, this is the net ammount of the stock of unit under \
+		development that the producer would prefer to dispose of versus continuing \
+		development or moving to finished goods for sale.
+	|
+
+Desired Fraction of Inventory Available to Customer=
+	xidz(exp(Expected Value of Shipping to Customer),(exp(Expected Value of Disposing of Inventory\
+		)+exp(Expected Value of Holding Inventory
+	)+exp(Expected Value of Shipping to Customer)),1-Desired Fraction of Inventory Disposed\
+		-Desired Fraction of Inventory Held Back)
+	~	Dmnl
+	~	The fraction of fully developed and finished goods units that are being \
+		actively stored by the producer that the producer would want to make \
+		available for shipping to the customer, given the cost structure of the \
+		system.
+	|
+
+Desired Fraction of Inventory Disposed=
+	exp(Expected Value of Disposing of Inventory)/(exp(Expected Value of Disposing of Inventory\
+		)+exp(Expected Value of Holding Inventory
+	)+exp(Expected Value of Shipping to Customer))
+	~	Dmnl
+	~	The fraction of fully developed and finished goods units that are being \
+		actively stored by the producer that the producer would want to dispose \
+		of, given the cost structure of the system.
+	|
+
+Desired Fraction of Inventory Held Back=
+	exp(Expected Value of Holding Inventory)/(exp(Expected Value of Disposing of Inventory\
+		)+exp(Expected Value of Holding Inventory
+)+exp(Expected Value of Shipping to Customer))
+	~	Dmnl
+	~	The fraction of fully developed and finished goods units that are being \
+		actively stored by the producer that the producer would want to hold in \
+		storage rather than destorying it or making it available to ship to the \
+		customer.
+	|
+
+Desired Inventory to Dispose of=
+	Producer Finished Goods Inventory*Desired Fraction of Inventory Disposed
+	~	Unit
+	~	Given the desired fraction of inventory to make available for disposal and \
+		the current ammount of unit in storage, this is the net ammount of the \
+		stock of producer unit in storage that the producer would prefer to \
+		dispose of versus continuing holding or making available for shipment to \
+		customers.
+	|
+
+Effect of Producer Inventory Coverage on Producer Price=
+	Producer Inventory Ratio^(-Sensitivity of Producer Price to Producer Inventory Coverage\
+		)
+	~	Dmnl
+	~	Captures the inverse relationship between inventory coverage and the \
+		effect on price, ie an overabudance of inventory will exert a downward \
+		pressure on the offered price. This is modeled in a manner similar to \
+		expression 20-47 from Chapter 20 of Business Dynamics, but with an \
+		additional limit on extreme conditions missing from that original \
+		formulation. Here the price has a maximum multiple that can be applied (ie \
+		cannot truely approach infinity). The formulation above has a check to \
+		prevent overflow errors in Vensim for small values of inventory ratios.
+	|
+
+Elasticity of Customer Demand=
+	1
+	~	Dmnl
+	~	Under an assumption of a linear demand curve near the reference prices and \
+		demand, this is the negative value of the slope of that curve. Note that \
+		this parameter is assumed to take on a POSTIVE VALUE under the default \
+		assumptoins of decreasing demand with increasing spot prices. High \
+		POSITIVE values of the factor create a steaper, but still negatively \
+		sloped, demand curve.
+	|
+
+Expected Producer Variable GM=
+	xidz(("Producer Short-Run Expected Price"-Producer Expected Mixed Variable Costs),"Producer Short-Run Expected Price"\
+		,-1e+20)
+	~	Dmnl
+	~	Given the expected variable costs and the expected selling price, this is \
+		the expected Gross Marging that the producer expects in the short run, \
+		which in turn affects the planned production.
+	|
+
+Expected Value of Holding Inventory=
+	0
+	~	Dmnl
+	~	The normalized economic value of allowing a unit to stay in producer \
+		storage versus disposing it or making it avaialable for shipping to the \
+		customer.
+	|
+
+Producer Cost to Destory Inventory=
+	1
+	~	$/Unit
+	~	The cost incurred by the producer to dispose of a unit that is being \
+		stored after production and before shipping to the customer. Note that \
+		this could not only be the actual material cost (labor and equipment) but \
+		also could be extended to include physicological costs from sunk cost \
+		fallacy or similar resistance to disposing units that have already had \
+		resources invested in their development and storage.
+	|
+
+Producer Cost to Dispose of or Abandon WIP=
+	2
+	~	$/Unit
+	~	The cost incurred by the producer to dispose of a unit being actively \
+		developed in a WIP state. Note that this could not only be the actual \
+		material cost (labor and equipment) but also could be extended to include \
+		physicological costs from sunk cost fallacy or similar resistance to \
+		disposing units that have already had resources invested in their \
+		development.
+	|
+
+Producer Desired Inventory=
+	Producer Desired Inventory Coverage*Customer Demand
+	~	Unit
+	~	Total inventory the producer would like to have available to meet expected \
+		customer demand given the producer desired inventory coverage level
+	|
+
+Producer Desired Inventory Coverage=
+	2
+	~	Weeks
+	~	Weeks supply of inventory the producerer wants to have on hand
+	|
+
+Producer Expected Mixed Variable Costs= ACTIVE INITIAL (
+	SMOOTH(Producer Observed Mixed Variable Costs,Time for Producer to Adjust Expected Mixed Variable costs\
+		),
+		Reference Mixed Variable Costs)
+	~	$/Unit
+	~	The variable costs that the producer expects to incur for a new unit of \
+		unit production started. This is an exponentially smoothed value of the \
+		instantaneously observed variable costs.
+	|
+
+Producer Fullfillment Ratio=
+	min(1,Maximum Producer Shipping Rate/Customer Demand)
+	~	Dmnl
+	~	Ratio indicating what portion of the demand from the Customer can actually \
+		be fullfilled by the Producer, given the limitation of the maximum \
+		shipping rate.
+	|
+
+Producer Cost to Place in FG State=
+	0.1
+	~	$/Unit
+	~	Costs, per unit, that the producer incurs to move a unit from the WIP to \
+		the FG state.
+	|
+
+Producer Inventory Ratio=
+	Producer Finished Goods Inventory/Producer Desired Inventory
+	~	Dmnl
+	~	Ratio of the current producer inventory to that desired to maintain the \
+		weeks of supply
+	|
+
+Producer Raw Material Costs=
+	0.05
+	~	$/Unit
+	~	Raw cost per unit (ie the variable cost) the producer endures
+	|
+
+Producer Reference Production=
+	Reference Consumer Demand+Initial Destruction of WIP+Initial Disposal of Producer Inventory\
+		+Initial Producer Storage Decay
+	~	Unit/Week
+	~	The production of the Producer at the reference spot prices (which affect \
+		reference gross margins) and desired inventory coverage values
+	|
+
+Producer Shipping Costs=
+	0.1
+	~	$/Unit
+	~	Costs, per unit, that the producer incurs to process and ship goods for \
+		the Customer.
+	|
+
+Producer Spot Price=
+	Effect of Unit Age on Producer Price*Producer Spot Price for Full Matured Goods
+	~	$/Unit
+	~	The actual spot price of the unit is the current market spot price \
+		adjusted by the value of the unit given its age (or average maturation \
+		time).
+	|
+
+Producer Spot Price for Full Matured Goods=
+	Producer Customer Expected Price*Effect of Producer Inventory Coverage on Producer Price
+	~	$/Unit
+	~	Here, the spot price is achored to the customer's expected price, modified \
+		by the infludence of inventory coverage. This is generally modeled in a \
+		manner similar to Chapter 20 from Business Dynamics. Specfically, refer to \
+		Figure 20-14 and the surrouding text. A notable difference is the \
+		exculsion of an explict mechanism to influence spot prices on the \
+		'expected production costs'. That mechanism introduces yet another \
+		sensitivty parameter, and is captured in part by the use of Gross Margins \
+		to affect demand signals elsewhere in the model. If evidence of this \
+		'expected produciton costs' mechanism is found in determining more \
+		immediate spot prices in this environment, this could be added via the \
+		formulaton similar to expressoin 20-50 from Business Dynamics.
+	|
+
+Producer Variable Cost for Disposed Crops=
+	Producer Raw Material Costs+Producer Cost to Dispose of or Abandon WIP
+	~	$/Unit
+	~	The variable costs incurred for a unit production started by the producer \
+		but ultimatley disposed of prior to moving to a finished goods state.
+	|
+
+Producer Variable Cost for Disposed Finished Goods=
+	Producer Raw Material Costs+Producer Cost to Place in FG State+Producer Cost to Destory Inventory
+	~	$/Unit
+	~	The variable costs incurred for a unit production started by the producer \
+		and moved to a finished goods state but ultimatley disposed of prior to \
+		shipping to the customer.
+	|
+
+Producer Variable Costs for Sold Goods=
+	Producer Raw Material Costs+Producer Cost to Place in FG State+Producer Shipping Costs
+	~	$/Unit
+	~	The variable costs incurred for a unit of production started by the \
+		producer, moved to a FG state, and then ultimatley shipped to the \
+		wholesale customer.
+	|
+
+Producer Variable GM Ratio=
+	(Expected Producer Variable GM-Producer Reference Variable GM at Reference Production\
+		)+1
+	~	Dmnl
+	~	Ratio of the Expected Gross Maring to the Reference Gross Margin, which is \
+		an input to the 'blocky-s-shaped' function that affects production
+	|
+
+Production Starts=
+	SMOOTH(Production Capacity under Utilization*Average Producer Capacity Yield,Time to adjust Production Schedule\
+		)
+	~	Units/Week
+	~	The act of kicking off new production. An alternative name for this flow \
+		could be 'planting' for clarity. But it could also be something like the \
+		insemiation rate of cattle or other livestock. It is assumed the producer \
+		cannot immediatley change the planting, or production, scehdule as the \
+		producer needs to clear exiting land or otherwise reconfigure resources in \
+		order to meet a new desired production schedule.
+	|
+
+Gain of Maturation=
+	"Units under Development (WIP)"*Rate of Maturation Gain
+	~	Unit
+	~	The addition of total maturation time to the stock of WIP that comes the \
+		progression of time in the model.
+	|
+
+Initial Producer Inventory=
+	Producer Desired Inventory Coverage*Reference Consumer Demand
+	~	Units
+	~	The initial steady state ammount of unit the producer has ready for \
+		storage and sale
+	|
+
+Initial Producer Storage Decay=
+	Initial Producer Inventory/Average Shelf Life of Producer Stored Goods
+	~	Unit/Week
+	~	The initial decay of unit spoiling in the producer storage, prior to \
+		shipment to the customer. Used to set the reference level of producer \
+		production starts needed to start the system in a steady state condition
+	|
+
+Initial Units under Development=
+	max(0,Initial FG Production*Producer Processing Time*(Initial Average Age of Units under Development\
+		-Avg Age of New Units)/(
+	Rate of Maturation Gain*Producer Processing Time-(Initial Average Age of Units under Development\
+		-Avg Age of New Units)*Initial Fraction of Units Disposed
+	))
+	~	Units
+	~	The initial steady state ammount of unit the producer has in process, \
+		growing or maturing, but not yet ready for storage and sale
+	|
+
+Initial Fraction of WIP to Move to FG=
+	exp(Initial Value of Harvesting)/(exp(Expected Value of Disposing Units)+exp(Initial Value of Harvesting\
+		)+exp((1-"SW - Neutral Value for Holding WIP")*Initial Value of Harvesting
+	))
+	~	Dmnl
+	~	The initial fraction of the unit under development that the producer would \
+		want to make availalbe as finished goods, given the cost structure of the \
+		system. This is used to initialize the system under steady state \
+		conditions.
+	~	:SUPPLEMENTARY 
+	|
+
+Initial Fraction of Inventory Available to Customer=
+	exp(Initial Value of Shipping)/(exp(Expected Value of Disposing of Inventory)+exp(Initial Value of Holding\
+		)+exp(Initial Value of Shipping))
+	~	Dmnl
+	~	The initial fraction of fully developed and finished goods units that are \
+		being actively stored by the producer that the producer would want to make \
+		available for shipping to the customer, given the cost structure of the \
+		system. This is used to initialize the system in a steady state condition.
+	~	:SUPPLEMENTARY 
+	|
+
+Initial Fraction of Inventory Disposed=
+	exp(Expected Value of Disposing of Inventory)/(exp(Expected Value of Disposing of Inventory\
+		)+exp(Initial Value of Holding)+exp(Initial Value of Shipping))
+	~	Dmnl
+	~	The initial fraction of fully developed and finished goods units that are \
+		being actively stored by the producer that the producer would want to \
+		dispose of, given the cost structure of the system. This is used to \
+		initialize the system in a steady state condition.
+	|
+
+Initial FG Production=
+	Initial Disposal of Producer Inventory+Reference Consumer Demand+Initial Producer Storage Decay
+	~	Unit/Week
+	~	The initial FG production flow needed to start the system in a steady \
+		state condition
+	|
+
+Initial Total Age of Unit under Development=
+	Initial Units under Development*Initial Average Age of Units under Development
+	~	Weeks*Unit
+	~	The initial steady state value of this stock based on the initial average \
+		age of the unit and the initial total ammount of unit under development
+	|
+
+Initial Value of Holding=
+	0
+	~	Dmnl
+	~	The initial value of the act of holding inventory in the producer insteady \
+		of either disposing it or making it available to ship to the customer. \
+		Used to initialize the system in a steady state condition
+	|
+
+Maximum Producer Shipping Rate=
+	(Producer Finished Goods Inventory*Desired Fraction of Inventory Available to Customer\
+		)/Producer Shipping Time
+	~	Units/Week
+	~	Maximum rate that the producerer can actually ship goods out of inventory \
+		to the customer
+	|
+
+Maximum Production Rate=
+	("Units under Development (WIP)"*Desired Units Fraction to Move to FG)/Producer Processing Time
+	~	Unit/Week
+	~	The maximum rate at which the producer would be willing and able to finish \
+		a unit under development, given the processing time and fraction of the \
+		units under development the producer is willing to allow to be moved to a \
+		FG state.
+	|
+
+Mean of Capacity Utilization CDF=
+	1
+	~	Dmnl
+	~	The value of the producer's GM Ratio at which 50% of the available \
+		capacity will be utilized. While not necessary, setting this value to 1 \
+		helps make inutitive sense with the rest of the model.
+	|
+
+Normal Producer Capacity Utilization=
+	NORMAL CDF((1-Mean of Capacity Utilization CDF)/St Dev of Capacity Utilization CDF)
+	~	Dmnl
+	~	The percent of prodcution capacity utilized under normal costs and prices \
+		(ie when the gross margin of the firm is the long-run steady state value \
+		from the initialization conditions of the model).
+	|
+
+Production Capacity under Utilization=
+	Available Production Capacity*Capacitiy Utilization
+	~	Hectares
+	~	In the unit analogy, this is the total land that is actually being used by \
+		the producer to produce unit, where it would be the total arable land \
+		multiplied by the utilization. This would have the name 'Total Land under \
+		Cultivation' or similar.
+	|
+
+Rate of Maturation Gain=
+	1
+	~	Weeks/(Week)
+	~	Rate at which unit under development gains age. Generally this shoud be \
+		fixed at a value of 1. But it could conceivably differ (for example \
+		weather or a new fertilizer significantly affects the rate of agining of a \
+		unit in either direction).
+	|
+
+REFERENCE PRODUCER PRICE=
+	1.1
+	~	$/Unit
+	~	Price at which the Producer expereinces its reference Gross Margin and \
+		Refernce Planting
+	|
+
+Sensitivity of Producer Price to Producer Inventory Coverage=
+	2
+	~	Dmnl
+	~	Factor affecting how 'steep' the inverse relationship between inventory \
+		coverage and price is. Note that based on this formulation, this is \
+		assumed a POSITIVE value here for the expected inverse relationship. \
+		Higher POSTIVE values of this factor imply more sensitivity.
+	|
+
+Shipping to Customer=
+	Producer Fullfillment Ratio*Customer Demand
+	~	Units/Week
+	~	Shipments of goods from the producerer to the customer. This is limited by \
+		what the customer demands and what the producerer can actually ship.
+	|
+
+St Dev of Capacity Utilization CDF=
+	0.4
+	~	Dmnl
+	~	The standard deviation of the underlying normal distribution that \
+		determines the shape of the CDF of capacity utilization
+	|
+
+"SW - Neutral Value for Holding WIP"=
+	0
+	~	Dmnl [0,1,1]
+	~	Switch that determines how the producer evaluates the value of holding WIP \
+		verus other options. If set to 1, then the value of holding WIP is set to \
+		a value of 0, which then becomes the neutral choice. If set to 0, then the \
+		producer uses a simple forward esitmation method to value holding unit for \
+		further development and maturation, versus disposing or moving into a \
+		finished goods state
+	|
+
+Time for Producer to Adjust Expected Mixed Variable costs=
+	2
+	~	Weeks
+	~	Time, on average, for the producer to update its expectation of the mixed \
+		variable costs it will typically incur per unit production started.
+	|
+
+"Time for Producer to Adjusted Short-Run Expected Price"=
+	1
+	~	Week
+	~	Time, on average, for the producer to incorporate the spot price into its \
+		expected price
+	|
+
+Time for Producer to update Expected Production Needed=
+	4
+	~	Weeks
+	~	Average time for the producer to update their expectations of historically \
+		observed orders from customers (inclusive of other losses such as decay \
+		and shrink, if applicable).
+	|
+
+Time for Customer to Adjust Demand=
+	4
+	~	Week
+	~	The time, on average, for the demand from the Customer to change based on \
+		the indicated demand
+	|
+
+Time to Adjust Producer Customer Expected Price=
+	24
+	~	Weeks
+	~	Time, on average, for the producer customer (here the customer) to \
+		incorporate the producer spot price into its expected price (ie its \
+		variable costs)
+	|
+
+Time to adjust Production Schedule=
+	26
+	~	Weeks
+	~	Average time to adjust the actual unit production starts (or planting \
+		schedule) to the desired value.
+	|
+
+Total Age of Units under Development= INTEG (
+	Additional Age Gain from New Production+Gain of Maturation-Age Loss from WIP Destruction\
+		-Age Loss from FG Production,
+		Initial Total Age of Unit under Development)
+	~	Weeks*Units
+	~	Total maturation time of unit under development
+	|
+
+Customer Demand= ACTIVE INITIAL (
+	SMOOTH(Indicated Customer Demand, Time for Customer to Adjust Demand ),
+		Reference Consumer Demand)
+	~	Units/Week
+	~	End demand from the customer. It is assumed they cannot immediatley change \
+		demand based features like preexisting deamdn commitments, or delays \
+		induced from finding new storage space or coordinating within the \
+		organization.
+	|
+
+********************************************************
+	.Control
+********************************************************~
+		Simulation Control Parameters
+	|
+
+FINAL TIME=
+	200
+	~	Week
+	~	The final time for the simulation.
+	|
+
+INITIAL TIME  = 0
+	~	Week
+	~	The initial time for the simulation.
+	|
+
+SAVEPER  = 
+        TIME STEP
+	~	Week [0,?]
+	~	The frequency with which output is stored.
+	|
+
+TIME STEP  = 0.125
+	~	Week [0,?]
+	~	The time step for the simulation.
+	|
+
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Dashboard
+$192-192-192,0,Arial|12||0-0-0|0-0-0|0-0-0|-1--1--1|-1--1--1|96,96,60,0
+12,1,0,773,110,384,49,8,135,0,24,-1,0,0,0,-1--1--1,0-0-0,|22|BU|0-0-0,0,0,0,0,0,0
+Dynamic Supply Chains with Endogenous Allocation
+12,2,0,501,189,83,40,3,135,0,28,-1,0,2,0,-1--1--1,192-192-192,|14|B|0-0-0,0,0,0,0,0,0
+View Full Model
+12,3,0,527,482,231,197,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+Senario: Pulse Change in Demand
+12,4,0,728,1089,174,107,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+Time to Update Prices
+12,5,0,1168,1089,236,107,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+Effects of Inventory Coverage & Elasticity
+12,6,0,311,1089,231,107,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+Time to Modify Production and Demand
+10,7,Producer Desired Inventory Coverage,1056,1048,70,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,8,"Time for Producer to Adjusted Short-Run Expected Price",734,1049,81,31,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,9,Time to Adjust Producer Customer Expected Price,729,1138,74,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,10,Time for Customer to Adjust Demand,433,1143,73,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,11,Sensitivity of Producer Price to Producer Inventory Coverage,1055,1121,82,27,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,12,Elasticity of Customer Demand,1259,1074,75,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,13,0,2339,304,275,197,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+Inventories
+12,14,0,1781,302,275,197,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+Demand
+12,15,0,1780,1184,275,197,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+Disposal_of_Food
+10,16,Producer finished goods disposal time,423,1046,78,22,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,17,Time for Producer to Adjust Expected Mixed Variable costs,190,1138,85,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,18,0,800,831,139,106,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+1 - Trapezoidal
+10,19,C Maximum Age at Full Value,868,768,66,19,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,20,0,732,1361,319,111,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+Producer Costing
+12,21,0,2358,1594,275,197,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+Crop_Fractions_Disposed_Held_Harvested
+12,22,0,2356,1182,275,197,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+Producer_Inventory_Fractions_Disposed_Held_Shipped
+12,23,0,1782,711,275,197,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+WIP_Maturation
+10,24,Time to adjust Production Schedule,193,1056,89,23,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,25,B Minimum Age at Full Value,730,885,59,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,26,A Minimum age of any Value,730,765,58,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,27,D Maximum age of any Value,868,885,60,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,28,0,2339,706,275,197,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+Producer_Actual_Spot_Price_vs_Full_Spot_Price
+12,29,0,1008,482,229,198,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+Senario: Ramp Change in Demand
+10,30,"SW - Switch for Pulse in Customer Purchases",399,377,63,34,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,31,"SW - Switch for Ramp Change in Customer Purchases",895,371,81,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,32,Size of Customer Pulse Demand Change,602,488,90,38,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,33,End Time of Customer Pulse Demand Change,602,374,65,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,34,Start Time of Customer Pulse Demand Change,602,602,68,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,35,Customer Ramp Demand Change Time Horizon,1100,616,99,26,8,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,36,Final Fraction of Original Customer Purchasing Power,1100,488,79,28,8,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,37,Time of Customer Ramp Demand Change,1100,360,88,27,8,131,0,0,-1,0,0,0,0,0,0,0,0,0
+12,38,0,259,1362,138,111,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+Methodologies
+10,39,"SW - Neutral Value for Holding WIP",251,1413,81,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,40,"SW - Logistic Choice Model in WIP",251,1295,81,29,8,131,0,0,-1,0,0,0,0,0,0,0,0,0
+12,41,0,1044,833,96,106,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+2 - Gaussian
+12,42,0,1271,830,117,106,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+3 - Linear Saturating
+10,43,Ideal Development Time,1044,783,69,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,44,"Lower Price-Value St Dev",1044,839,68,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,45,"Upper Price-Value St Dev",1044,895,68,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,46,"Linear - Minimum Age of Any Value",1272,779,64,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,47,"Linear - Age of Full Value",1273,880,64,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,48,0,1227,1363,162,109,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+WIP Aging Parameters
+10,49,Avg Age of New Units,1227,1409,64,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,50,Rate of Maturation Gain,1223,1314,58,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,51,"SW - Logistic Choice Model in FG",251,1353,73,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,52,0,1780,1593,275,197,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+Gross_Margin
+10,53,REFERENCE PRODUCER PRICE,971,1406,70,29,8,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,54,Producer Shipping Costs,643,1302,57,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,55,Producer Cost to Place in FG State,645,1406,65,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,56,Producer Cost to Dispose of or Abandon WIP,492,1404,73,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,57,Producer Cost to Destory Inventory,804,1404,62,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,58,Producer Raw Material Costs,493,1302,54,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,59,Average Shelf Life of Producer Stored Goods,975,1317,77,27,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,60,WIP Development Costs,812,1313,66,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,61,0,295,831,139,108,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+Age-Value Relationship
+12,62,0,295,883,79,39,8,135,0,16,-1,0,0,0,-1--1--1,0-0-0,||I|0-0-0,0,0,0,0,0,0
+0 = No relationship,   1 = Trapezoidal,        2 = Gaussian,             3 = Linear Saturating
+10,63,"SW - Age Value Relationship",289,773,77,21,8,131,0,0,-1,0,0,0,0,0,0,0,0,0
+12,64,0,683,189,83,40,3,135,0,28,-1,0,3,0,-1--1--1,192-192-192,|14|B|0-0-0,0,0,0,0,0,0
+Detailed View of Co-Flow Structure
+12,65,0,861,189,83,40,3,135,0,28,-1,0,4,0,-1--1--1,192-192-192,|14|B|0-0-0,0,0,0,0,0,0
+Detailed View of Age-Value Relationships
+12,66,0,1039,189,83,40,3,135,0,28,-1,0,5,0,-1--1--1,192-192-192,|14|B|0-0-0,0,0,0,0,0,0
+Reporting Structures
+12,67,0,552,830,104,106,3,135,0,24,3,0,0,0,-1--1--1,0-0-0,|18|BU|0-0-0,0,0,0,0,0,0
+0 - No Relationship
+10,68,Null Assumed Ideal WIP Development Time,551,812,88,29,8,131,0,0,-1,0,0,0,0,0,0,0,0,0
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Full Model
+$192-192-192,0,Arial|12||0-0-0|0-0-0|0-0-0|-1--1--1|-1--1--1|96,96,50,0
+10,1,Mean of Capacity Utilization CDF,993,1249,66,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,2,St Dev of Capacity Utilization CDF,1119,1129,70,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,3,"Units under Development (WIP)",1553,980,60,24,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,4,48,1004,977,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,5,7,3,4,0,0,22,0,0,0,-1--1--1,,1|(1356,970)|
+1,6,7,4,100,0,0,22,0,0,0,-1--1--1,,1|(1110,970)|
+11,7,0,1213,970,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,8,Production Starts,1213,996,86,18,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,9,Producer Finished Goods Inventory,2015,966,70,25,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,10,12,9,4,0,0,22,0,0,0,-1--1--1,,1|(1887,971)|
+1,11,12,3,100,0,0,22,0,0,0,-1--1--1,,1|(1715,971)|
+11,12,0,1824,971,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,13,FG Production,1824,994,52,15,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,14,15,9,100,0,0,22,0,0,0,-1--1--1,,1|(2289,965)|
+11,15,0,2499,965,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,16,Shipping to Customer,2499,991,42,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,17,Initial Units under Development,1242,683,62,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,18,Initial Producer Inventory,1943,1073,39,26,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,19,18,9,1,0,43,0,2,192,1,-1--1--1,|||0-0-0,1|(1962,1021)|
+10,20,Producer Fullfillment Ratio,2400,1210,60,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,21,Maximum Producer Shipping Rate,2219,1143,63,24,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,22,9,21,1,0,43,0,2,64,0,-1--1--1,|||0-0-0,1|(2096,1074)|
+1,23,21,20,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(2286,1182)|
+1,24,20,16,1,0,43,0,0,64,0,-1--1--1,,1|(2475,1116)|
+10,25,Producer Customer Expected Price,1677,1907,57,29,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,26,48,1314,1929,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,27,29,25,4,0,0,22,0,0,0,-1--1--1,,1|(1553,1927)|
+1,28,29,26,68,0,0,22,2,0,0,-1--1--1,|||0-0-0,1|(1399,1927)|
+11,29,0,1480,1927,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,30,Change in Producer Customer Expected Price,1480,1962,73,27,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,31,Time to Adjust Producer Customer Expected Price,1243,2020,91,28,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+1,32,31,30,1,0,45,0,2,192,0,-1--1--1,|||0-0-0,1|(1372,2018)|
+10,33,Producer Spot Price,1573,1635,49,25,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,34,Effect of Producer Inventory Coverage on Producer Price,2026,1476,95,30,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,35,Sensitivity of Producer Price to Producer Inventory Coverage,2110,1615,84,28,8,131,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,36,"Producer Short-Run Expected Price",1183,1557,57,29,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,37,48,1448,1546,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,38,40,37,4,0,0,22,0,0,0,-1--1--1,,1|(1406,1550)|
+1,39,40,36,68,0,0,22,2,0,0,-1--1--1,|||0-0-0,1|(1301,1550)|
+11,40,0,1368,1550,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,41,"Change in Producer Short-Run Expected Price",1368,1585,73,27,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,42,"Time for Producer to Adjusted Short-Run Expected Price",1359,1721,77,28,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+1,43,42,41,1,0,45,0,2,192,0,-1--1--1,|||0-0-0,1|(1358,1633)|
+1,44,33,41,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1387,1621)|
+1,45,36,41,1,0,45,0,2,192,0,-1--1--1,|||0-0-0,1|(1232,1594)|
+10,46,Expected Producer Variable GM,1000,1452,61,23,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,47,REFERENCE PRODUCER PRICE,1964,1837,78,19,8,131,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,48,Producer Inventory Ratio,2074,1245,54,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,49,Producer Desired Inventory Coverage,2334,1337,73,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+1,50,48,34,1,0,45,0,0,64,0,-1--1--1,,1|(2044,1402)|
+1,51,35,34,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(2046,1520)|
+1,52,9,48,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1993,1076)|
+10,53,Producer Desired Inventory,2229,1395,57,23,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,54,49,53,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(2297,1370)|
+1,55,53,48,1,0,45,0,2,192,0,-1--1--1,|||0-0-0,1|(2130,1337)|
+10,56,Producer Reference Production,795,776,68,22,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,57,Producer Desired Inventory Coverage,1875,1393,75,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,58,57,18,1,0,0,0,0,128,0,-1--1--1,,1|(1961,1248)|
+10,59,Producer Reference Variable GM at Reference Production,658,1351,77,33,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,60,Producer Variable GM Ratio,922,1307,65,19,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,61,59,60,1,0,45,0,2,192,0,-1--1--1,|||0-0-0,1|(748,1293)|
+1,62,46,60,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(958,1399)|
+10,63,REFERENCE PRODUCER PRICE,479,1299,66,23,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,64,63,59,1,0,0,0,0,128,0,-1--1--1,,1|(557,1312)|
+1,65,36,46,1,0,43,0,0,64,0,-1--1--1,,1|(1066,1520)|
+10,66,Reference Consumer Demand,628,775,77,18,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,67,66,56,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(711,796)|
+10,68,REFERENCE PRODUCER PRICE,1222,1650,68,24,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,69,68,36,1,0,0,0,0,128,1,-1--1--1,,1|(1203,1616)|
+10,70,Effect of Producer Price on Customer Demand,2409,1582,83,27,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,71,Reference Consumer Demand,2765,1337,74,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,72,Customer Demand,2527,1300,48,22,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,73,Indicated Customer Demand,2515,1479,75,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,74,Time for Customer to Adjust Demand,2353,1481,70,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+1,75,74,72,1,0,45,0,2,192,0,-1--1--1,|||0-0-0,1|(2439,1406)|
+1,76,73,72,1,0,0,0,0,128,0,-1--1--1,,1|(2538,1392)|
+1,77,71,72,1,0,0,0,0,128,1,-1--1--1,,1|(2743,1329)|
+1,78,72,16,1,0,43,0,0,192,0,-1--1--1,,1|(2554,1234)|
+1,79,72,53,1,0,43,0,2,64,0,-1--1--1,|||0-0-0,1|(2431,1374)|
+1,80,72,20,1,0,45,0,2,64,0,-1--1--1,|||0-0-0,1|(2435,1256)|
+1,81,70,73,1,0,43,0,2,64,0,-1--1--1,|||0-0-0,1|(2466,1538)|
+1,82,25,30,1,0,45,0,2,192,0,-1--1--1,|||0-0-0,1|(1665,1949)|
+10,83,Reference Consumer Demand,2535,1625,77,18,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,84,Elasticity of Customer Demand,2414,1868,72,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,85,Customer Demand Curve Slope,2343,1758,56,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,86,83,85,1,0,0,0,0,128,0,-1--1--1,,1|(2456,1708)|
+1,87,47,85,1,0,0,0,0,128,0,-1--1--1,,1|(2138,1844)|
+1,88,84,85,1,0,0,0,0,128,0,-1--1--1,,1|(2417,1824)|
+1,89,85,70,1,0,0,0,0,128,0,-1--1--1,,1|(2396,1699)|
+1,90,33,70,1,0,43,0,2,64,0,-1--1--1,|||0-0-0,1|(2002,1728)|
+1,91,47,70,1,0,0,0,0,128,0,-1--1--1,,1|(2148,1794)|
+1,92,83,70,1,0,0,0,0,128,0,-1--1--1,,1|(2516,1589)|
+12,93,0,709,221,73,32,3,135,0,28,-1,0,1,0,-1--1--1,192-192-192,|14|B|0-0-0,0,0,0,0,0,0
+Return to Dashboard
+1,94,47,25,1,0,43,0,2,192,1,-1--1--1,|||0-0-0,1|(1725,1884)|
+10,95,Production Capacity under Utilization,1037,1074,76,28,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,96,Capacitiy Utilization,926,1178,71,23,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,97,96,95,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(940,1119)|
+1,98,95,8,1,0,0,0,0,128,0,-1--1--1,,1|(1110,1016)|
+1,99,60,96,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(909,1248)|
+10,100,Normal Producer Capacity Utilization,1097,796,66,24,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,101,Available Production Capacity,753,977,57,35,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,102,Average Producer Capacity Yield,977,888,58,30,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,103,101,102,1,0,45,0,2,128,0,-1--1--1,|||0-0-0,1|(871,916)|
+1,104,102,7,1,0,0,0,0,128,0,-1--1--1,,1|(1046,933)|
+10,105,Producer Shipping Costs,2578,233,58,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,106,Producer Cost to Place in FG State,1530,45,66,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,107,Producer Shipping Costs,906,1949,90,30,8,130,0,2,0,0,0,0,0-0-0,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,108,Producer Cost to Place in FG State,727,1952,80,25,8,130,0,2,0,0,0,0,0-0-0,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,109,Producer Raw Material Costs,429,1955,55,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+12,110,48,2058,770,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,111,48,1559,728,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,112,Producer Shipping Costs,1918,51,70,26,8,130,0,2,0,0,0,0,0-0-0,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,113,"Producer Short-Run Expected Price",1742,40,65,23,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,114,Producer Cost to Dispose of or Abandon WIP,1345,60,72,28,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,115,Average Age of Units under Development,1679,1073,101,32,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,116,Effect of Unit Age on Producer Price,1632,1396,73,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,117,Expected Price of Selling Unit Held Beyond Current Age,1173,1406,93,34,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,118,Expected Value of Continuing Development,1842,227,67,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,119,Expected Value of Moving to Finished Goods,1626,222,77,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,120,Expected Value of Disposing Units,1408,229,67,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,121,112,118,1,0,0,0,0,128,0,-1--1--1,,1|(1890,148)|
+1,122,114,120,1,0,0,0,0,128,0,-1--1--1,,1|(1360,199)|
+1,123,112,119,1,0,0,0,0,128,0,-1--1--1,,1|(1739,143)|
+10,124,Desired Units Fraction Disposed,1429,380,63,26,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,125,Desired Units Fraction Held in WIP,1623,371,61,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,126,Desired Units Fraction to Move to FG,1826,367,75,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,127,118,124,1,0,45,0,0,128,0,-1--1--1,,1|(1568,301)|
+1,128,118,125,1,0,43,0,0,128,0,-1--1--1,,1|(1758,312)|
+1,129,118,126,1,0,45,0,0,128,0,-1--1--1,,1|(1865,316)|
+10,130,Producer Spot Price for Full Matured Goods,1771,1614,74,23,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,131,34,130,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1942,1549)|
+1,132,25,130,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1733,1812)|
+10,133,Initial Value of Harvesting,1205,254,67,24,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,134,Initial Fraction of Units Disposed,1138,365,63,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,135,133,134,1,0,0,0,0,128,0,-1--1--1,,1|(1166,288)|
+10,136,Maximum Production Rate,1730,845,59,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,137,3,136,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1584,943)|
+1,138,136,12,1,0,43,0,2,64,0,-1--1--1,|||0-0-0,1|(1776,876)|
+10,139,Reference Consumer Demand,2012,1331,77,18,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,140,139,18,1,0,0,0,0,128,0,-1--1--1,,1|(1995,1161)|
+1,141,47,118,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,142,47,119,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,143,47,120,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,144,47,133,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,145,106,119,1,0,0,0,0,128,0,-1--1--1,,1|(1572,133)|
+1,146,106,118,1,0,0,0,0,128,0,-1--1--1,,1|(1727,149)|
+1,147,106,133,1,0,0,0,0,128,0,-1--1--1,,1|(1405,137)|
+1,148,120,124,1,0,43,0,0,128,0,-1--1--1,,1|(1385,306)|
+1,149,120,125,1,0,45,0,0,128,0,-1--1--1,,1|(1500,259)|
+1,150,120,126,1,0,45,0,0,128,0,-1--1--1,,1|(1683,286)|
+1,151,119,124,1,0,45,0,0,128,0,-1--1--1,,1|(1508,256)|
+1,152,119,125,1,0,45,0,0,128,0,-1--1--1,,1|(1608,311)|
+1,153,119,126,1,0,43,0,0,128,0,-1--1--1,,1|(1790,297)|
+10,154,Expected Value of Shipping to Customer,2715,301,67,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,155,Expected Value of Disposing of Inventory,2501,320,80,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,156,Producer Spot Price,2725,212,60,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,157,156,154,1,0,43,0,0,128,0,-1--1--1,,1|(2712,236)|
+1,158,47,154,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,159,Producer Cost to Destory Inventory,2476,183,62,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,160,159,155,1,0,45,0,0,128,0,-1--1--1,,1|(2476,255)|
+1,161,47,155,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,162,Expected Value of Holding Inventory,2869,300,67,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,163,Desired Fraction of Inventory Available to Customer,2715,586,81,27,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,164,Desired Fraction of Inventory Held Back,2899,572,72,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,165,162,163,1,0,45,0,0,128,0,-1--1--1,,1|(2844,460)|
+1,166,154,163,1,0,43,0,0,128,0,-1--1--1,,1|(2672,449)|
+1,167,162,164,1,0,43,0,0,128,0,-1--1--1,,1|(2907,393)|
+1,168,154,164,1,0,45,0,0,128,0,-1--1--1,,1|(2859,439)|
+10,169,Desired Fraction of Inventory Available to Customer,2196,1032,78,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,170,Producer finished goods disposal time,2204,681,75,19,8,131,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,171,Desired Fraction of Inventory Disposed,2490,605,72,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,172,155,171,1,0,43,0,0,128,0,-1--1--1,,1|(2491,440)|
+1,173,154,171,1,0,45,0,0,128,0,-1--1--1,,1|(2538,458)|
+1,174,162,171,1,0,45,0,0,128,0,-1--1--1,,1|(2635,468)|
+1,175,155,163,1,0,45,0,0,128,0,-1--1--1,,1|(2613,419)|
+1,176,155,164,1,0,45,0,0,128,0,-1--1--1,,1|(2789,460)|
+1,177,120,134,1,0,0,0,0,128,0,-1--1--1,,1|(1303,302)|
+1,178,112,133,1,0,0,0,0,128,0,-1--1--1,,1|(1577,180)|
+10,179,Initial Fraction of Inventory Disposed,2236,432,78,25,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,180,Initial Value of Shipping,2258,269,51,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,181,REFERENCE PRODUCER PRICE,2251,197,73,27,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,182,105,180,1,0,0,0,0,128,0,-1--1--1,,1|(2513,232)|
+10,183,Initial Value of Holding,2306,311,51,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,184,155,179,1,0,0,0,0,128,0,-1--1--1,,1|(2435,366)|
+1,185,180,179,1,0,0,0,0,128,0,-1--1--1,,1|(2168,305)|
+1,186,183,179,1,0,0,0,0,128,0,-1--1--1,,1|(2288,376)|
+1,187,169,21,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(2219,1056)|
+10,188,Desired Inventory to Dispose of,2405,810,64,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,189,171,188,1,0,0,0,0,128,0,-1--1--1,,1|(2418,743)|
+1,190,9,188,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(2197,944)|
+10,191,Producer Processing Time,1667,736,64,19,8,131,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,192,Initial Destruction of WIP,1004,444,62,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,193,Producer Processing Time,946,298,81,19,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,194,Initial Units under Development,888,367,63,21,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,195,134,192,1,0,0,0,0,128,0,-1--1--1,,1|(1068,384)|
+1,196,193,192,1,0,0,0,0,128,0,-1--1--1,,1|(994,369)|
+1,197,194,192,1,0,0,0,0,128,0,-1--1--1,,1|(944,394)|
+10,198,Initial Disposal of Producer Inventory,2191,525,68,27,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,199,170,198,1,0,0,0,0,128,0,-1--1--1,,1|(2184,614)|
+10,200,Initial Producer Inventory,2343,593,52,31,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,201,179,198,1,0,0,0,0,128,0,-1--1--1,,1|(2197,477)|
+1,202,200,198,1,0,0,0,0,128,0,-1--1--1,,1|(2267,544)|
+10,203,Initial Disposal of Producer Inventory,599,694,74,23,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,204,203,56,1,0,43,0,2,64,0,-1--1--1,|||0-0-0,1|(716,723)|
+10,205,Expected Price of Selling Unit Held Beyond Current Age,2096,52,97,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,206,205,118,1,0,0,0,0,128,0,-1--1--1,,1|(2004,157)|
+10,207,Desired Units to Dispose of,1467,693,59,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,208,124,207,1,0,0,0,0,128,0,-1--1--1,,1|(1499,592)|
+1,209,3,207,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1477,931)|
+1,210,116,33,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1597,1487)|
+1,211,130,33,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1692,1635)|
+1,212,192,56,1,0,0,0,0,128,0,-1--1--1,,1|(869,581)|
+10,213,Expected Needed Production,1895,685,52,28,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,214,Time for Producer to update Expected Production Needed,2001,560,71,30,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,215,214,213,1,0,45,0,2,64,0,-1--1--1,|||0-0-0,1|(1931,626)|
+1,216,213,12,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1875,804)|
+1,217,126,136,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1783,643)|
+10,218,Total Age of Units under Development,1518,1205,61,37,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,219,48,1258,1208,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,220,222,218,4,0,0,22,0,0,0,-1--1--1,,1|(1411,1208)|
+1,221,222,219,100,0,0,22,0,0,0,-1--1--1,,1|(1311,1208)|
+11,222,0,1360,1208,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,223,Additional Age Gain from New Production,1360,1234,86,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,224,48,1800,1236,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,225,227,224,4,0,0,22,0,0,0,-1--1--1,,1|(1728,1233)|
+1,226,227,218,100,0,0,22,0,0,0,-1--1--1,,1|(1616,1233)|
+11,227,0,1660,1233,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,228,Age Loss from FG Production,1660,1260,63,19,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,229,Avg Age of New Units,1239,1148,59,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+1,230,8,222,1,0,0,0,0,128,0,-1--1--1,,1|(1327,1115)|
+1,231,229,222,1,0,0,0,0,128,0,-1--1--1,,1|(1334,1191)|
+1,232,13,227,1,0,0,0,0,128,0,-1--1--1,,1|(1800,1152)|
+12,233,48,1522,1058,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,234,236,218,4,0,0,22,0,0,0,-1--1--1,,1|(1524,1150)|
+1,235,236,233,100,0,0,22,0,0,0,-1--1--1,,1|(1524,1093)|
+11,236,0,1524,1126,8,6,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,237,Gain of Maturation,1477,1126,39,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,238,3,237,1,0,0,0,0,128,0,-1--1--1,,1|(1472,1054)|
+10,239,Rate of Maturation Gain,1382,1064,60,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+1,240,239,237,1,0,0,0,0,128,0,-1--1--1,,1|(1408,1111)|
+10,241,Initial Total Age of Unit under Development,1433,1316,64,24,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,242,Avg Age of New Units,1330,567,69,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,243,Rate of Maturation Gain,1352,645,63,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,244,Initial FG Production,2047,411,57,22,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,245,198,244,1,0,0,0,0,128,0,-1--1--1,,1|(2149,463)|
+10,246,Reference Consumer Demand,2082,310,77,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,247,246,244,1,0,0,0,0,128,0,-1--1--1,,1|(2042,340)|
+10,248,Producer Processing Time,1275,485,68,21,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,249,3,115,1,0,0,0,0,128,0,-1--1--1,,1|(1587,1017)|
+1,250,218,115,1,0,0,0,0,128,0,-1--1--1,,1|(1578,1134)|
+1,251,241,218,1,0,0,0,0,128,1,-1--1--1,,1|(1456,1236)|
+1,252,17,3,1,0,0,0,0,128,1,-1--1--1,,1|(1386,941)|
+1,253,115,227,1,0,0,0,0,128,0,-1--1--1,,1|(1744,1126)|
+1,254,243,17,1,0,0,0,0,128,0,-1--1--1,,1|(1317,669)|
+1,255,242,17,1,0,0,0,0,128,0,-1--1--1,,1|(1288,645)|
+1,256,134,17,1,0,0,0,0,128,0,-1--1--1,,1|(1197,623)|
+1,257,248,17,1,0,0,0,0,128,0,-1--1--1,,1|(1256,614)|
+10,258,Initial FG Production,1059,685,64,18,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,259,258,17,1,0,0,0,0,128,0,-1--1--1,,1|(1121,713)|
+1,260,113,119,1,0,0,0,0,128,0,-1--1--1,,1|(1700,131)|
+10,261,"SW - Neutral Value for Holding WIP",2292,98,81,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,262,261,118,1,0,0,0,0,128,0,-1--1--1,,1|(1998,206)|
+10,263,Average Age of Units under Development,1135,1254,64,29,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,264,Initial Units under Development,1259,1288,66,22,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,265,264,241,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1307,1282)|
+10,266,"SW - Neutral Value for Holding WIP",1038,234,85,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,267,266,134,1,0,0,0,0,128,0,-1--1--1,,1|(1075,301)|
+1,268,105,154,1,0,45,0,2,64,0,-1--1--1,|||0-0-0,1|(2655,231)|
+10,269,Producer Variable Cost for Disposed Crops,508,1771,79,26,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,270,Producer Variable Cost for Disposed Finished Goods,723,1787,84,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,271,Producer Variable Costs for Sold Goods,865,1804,53,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,272,Producer Cost to Dispose of or Abandon WIP,330,1788,73,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,273,Producer Cost to Destory Inventory,579,1962,67,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,274,109,269,1,0,0,0,0,128,0,-1--1--1,,1|(393,1881)|
+1,275,109,270,1,0,0,0,0,128,0,-1--1--1,,1|(508,1844)|
+1,276,109,271,1,0,0,0,0,128,0,-1--1--1,,1|(728,1867)|
+1,277,108,271,1,0,0,0,0,128,0,-1--1--1,,1|(816,1884)|
+1,278,107,271,1,0,0,0,0,128,0,-1--1--1,,1|(900,1879)|
+1,279,108,270,1,0,0,0,0,128,0,-1--1--1,,1|(727,1862)|
+1,280,272,269,1,0,0,0,0,128,0,-1--1--1,,1|(384,1751)|
+1,281,273,270,1,0,0,0,0,128,0,-1--1--1,,1|(625,1900)|
+10,282,Reference Mixed Variable Costs,584,1541,62,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,283,269,282,1,0,0,0,0,128,0,-1--1--1,,1|(519,1692)|
+1,284,270,282,1,0,0,0,0,128,0,-1--1--1,,1|(583,1670)|
+1,285,271,282,1,0,0,0,0,128,0,-1--1--1,,1|(736,1643)|
+10,286,Initial Destruction of WIP,455,1442,67,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,287,Initial Disposal of Producer Inventory,384,1550,69,25,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,288,Producer Reference Production,410,1658,72,27,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,289,288,282,1,0,0,0,0,128,0,-1--1--1,,1|(484,1615)|
+1,290,286,282,1,0,0,0,0,128,0,-1--1--1,,1|(479,1472)|
+1,291,287,282,1,0,0,0,0,128,0,-1--1--1,,1|(461,1553)|
+1,292,282,59,1,0,0,0,0,128,0,-1--1--1,,1|(589,1468)|
+10,293,Production Starts,969,1851,62,28,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,294,Producer Observed Mixed Variable Costs,938,1629,79,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,295,293,294,1,0,0,0,0,128,0,-1--1--1,,1|(942,1756)|
+1,296,271,294,1,0,0,0,0,128,0,-1--1--1,,1|(932,1733)|
+1,297,270,294,1,0,0,0,0,128,0,-1--1--1,,1|(805,1712)|
+1,298,269,294,1,0,0,0,0,128,0,-1--1--1,,1|(723,1713)|
+10,299,Producer Expected Mixed Variable Costs,820,1481,64,27,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,300,Time for Producer to Adjust Expected Mixed Variable costs,956,1557,85,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,301,300,299,1,0,0,0,0,128,0,-1--1--1,,1|(894,1506)|
+1,302,294,299,1,0,0,0,0,128,0,-1--1--1,,1|(843,1599)|
+1,303,282,299,1,0,0,0,0,128,1,-1--1--1,,1|(705,1526)|
+1,304,299,46,1,0,0,0,0,128,0,-1--1--1,,1|(916,1472)|
+10,305,Time to adjust Production Schedule,1241,895,79,19,8,131,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+1,306,305,7,1,0,0,0,0,128,0,-1--1--1,,1|(1211,922)|
+1,307,282,294,1,0,0,0,0,128,0,-1--1--1,,1|(759,1605)|
+10,308,Customer Demand,2078,619,46,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,309,33,30,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1509,1760)|
+10,310,Initial Average Age of Units under Development,1393,1397,68,25,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,311,310,241,1,0,0,0,0,128,0,-1--1--1,,1|(1400,1367)|
+10,312,Initial Average Age of Units under Development,1071,562,71,27,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,313,312,17,1,0,0,0,0,128,0,-1--1--1,,1|(1111,635)|
+1,314,191,136,1,0,45,0,2,192,0,-1--1--1,|||0-0-0,1|(1708,775)|
+1,315,171,163,1,0,0,0,0,128,0,-1--1--1,,1|(2616,651)|
+1,316,164,163,1,0,0,0,0,128,0,-1--1--1,,1|(2782,627)|
+10,317,Initial Fraction of WIP to Move to FG,1307,380,63,24,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,318,120,317,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+1,319,133,317,1,0,0,0,0,128,0,-1--1--1,,1|(1231,291)|
+1,320,266,317,1,0,0,0,0,128,0,-1--1--1,,1|(1187,328)|
+12,321,48,1800,1184,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,322,324,321,4,0,0,22,0,0,0,-1--1--1,,1|(1740,1182)|
+1,323,324,218,100,0,0,22,0,0,0,-1--1--1,,1|(1628,1182)|
+11,324,0,1684,1182,6,8,34,3,0,0,3,0,0,0,0,0,0,0,0,0
+10,325,Age Loss from WIP Destruction,1684,1156,64,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,326,115,325,1,0,0,0,0,128,0,-1--1--1,,1|(1683,1104)|
+12,327,48,1983,815,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,328,Average Shelf Life of Producer Stored Goods,2005,729,88,19,8,131,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,329,Initial Producer Storage Decay,1902,1210,56,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,330,18,329,1,0,0,0,0,128,0,-1--1--1,,1|(1950,1138)|
+10,331,Average Shelf Life of Producer Stored Goods,1847,1290,88,23,8,130,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,332,331,329,1,0,0,0,0,128,0,-1--1--1,,1|(1881,1257)|
+10,333,Initial Producer Storage Decay,718,579,60,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,334,333,56,1,0,0,0,0,128,0,-1--1--1,,1|(775,679)|
+1,335,308,213,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1962,646)|
+10,336,Initial Producer Storage Decay,1945,476,60,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,337,336,244,1,0,0,0,0,128,0,-1--1--1,,1|(2007,472)|
+10,338,Initial Fraction of Inventory Available to Customer,2412,458,77,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,339,183,338,1,0,0,0,0,128,0,-1--1--1,,1|(2400,333)|
+1,340,180,338,1,0,0,0,0,128,0,-1--1--1,,1|(2411,323)|
+1,341,155,338,1,0,0,0,0,128,0,-1--1--1,,1|(2480,380)|
+10,342,Producer Shipping Time,2383,1088,56,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+1,343,342,21,1,0,0,0,0,128,0,-1--1--1,,1|(2324,1122)|
+1,344,2,96,1,0,0,0,0,128,0,-1--1--1,,1|(1045,1137)|
+1,345,1,96,1,0,0,0,0,128,0,-1--1--1,,1|(955,1219)|
+1,346,2,100,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,347,1,100,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,348,101,95,1,0,0,0,0,128,0,-1--1--1,,1|(888,1010)|
+1,349,56,102,1,0,43,0,2,64,0,-1--1--1,|||0-0-0,1|(846,847)|
+1,350,100,102,1,0,45,0,2,64,0,-1--1--1,|||0-0-0,1|(1058,847)|
+12,351,48,2841,968,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,352,15,351,4,0,0,22,0,0,0,-1--1--1,,1|(2668,965)|
+1,353,355,111,4,0,0,22,0,0,0,-1--1--1,,1|(1567,782)|
+1,354,355,3,100,0,0,22,0,0,0,-1--1--1,,1|(1567,898)|
+11,355,0,1567,834,8,6,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,356,Disposal of Units under Development,1490,834,71,18,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,357,207,356,1,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(1470,760)|
+1,358,191,355,1,0,45,0,2,128,0,-1--1--1,|||0-0-0,1|(1610,823)|
+1,359,355,325,1,0,0,0,0,128,0,-1--1--1,,1|(1697,1003)|
+1,360,362,110,4,0,0,22,0,0,0,-1--1--1,,1|(2058,815)|
+1,361,362,9,100,0,0,22,0,0,0,-1--1--1,,1|(2058,903)|
+11,362,0,2058,859,8,6,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,363,Disposal of Producer Finished Goods Inventory,2171,859,105,27,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,364,363,213,1,0,0,0,0,128,0,-1--1--1,,1|(2110,723)|
+1,365,170,363,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+1,366,188,363,1,0,0,0,0,128,0,-1--1--1,,1|(2299,878)|
+1,367,369,327,4,0,0,22,0,0,0,-1--1--1,,1|(1983,849)|
+1,368,369,9,100,0,0,22,0,0,0,-1--1--1,,1|(1983,914)|
+11,369,0,1983,882,8,6,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,370,Decay of Producer Stored Goods,1906,882,69,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,371,328,370,1,0,45,0,2,128,0,-1--1--1,|||0-0-0,1|(1939,788)|
+1,372,370,213,1,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(1893,808)|
+1,373,9,370,1,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(1925,924)|
+10,374,Disposal of Producer Finished Goods Inventory,1106,1833,82,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,375,374,294,1,0,0,0,0,128,0,-1--1--1,,1|(1070,1738)|
+10,376,Disposal of Units under Development,1062,1898,76,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,377,376,294,1,0,0,0,0,128,0,-1--1--1,,1|(1015,1775)|
+10,378,Underlying Customer Demand,2737,1449,70,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,379,378,73,1,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(2595,1491)|
+1,380,71,378,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(2764,1404)|
+1,381,181,180,1,0,0,0,0,128,0,-1--1--1,,1|(2235,234)|
+10,382,"SW - Switch for Pulse in Customer Purchases",2686,1553,86,28,8,131,0,18,0,0,0,0,0-0-0,0-0-0,||B|128-0-0,0,0,0,0,0,0
+10,383,"SW - Switch for Ramp Change in Customer Purchases",3025,1416,87,28,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||B|128-0-0,0,0,0,0,0,0
+10,384,"Scenario - Pulse in Customer Demand",2872,1532,69,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,385,"Scenario - Ramp in Customer Demand",2930,1326,71,24,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,386,Size of Customer Pulse Demand Change,2799,1700,75,40,8,131,0,2,0,0,0,0,0-0-0,0-0-0,|||128-0-0,0,0,0,0,0,0
+10,387,End Time of Customer Pulse Demand Change,2961,1688,65,27,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|||128-0-0,0,0,0,0,0,0
+10,388,Start Time of Customer Pulse Demand Change,3143,1576,68,27,8,3,0,2,0,0,0,0,0-0-0,0-0-0,|||128-0-0,0,0,0,0,0,0
+1,389,388,384,1,0,0,0,0,128,0,-1--1--1,,1|(2976,1493)|
+1,390,387,384,1,0,0,0,0,128,0,-1--1--1,,1|(2967,1619)|
+1,391,386,384,1,0,0,0,0,128,0,-1--1--1,,1|(2821,1656)|
+1,392,384,378,1,0,0,0,0,128,0,-1--1--1,,1|(2800,1480)|
+1,393,382,378,1,0,0,0,0,128,0,-1--1--1,,1|(2724,1520)|
+1,394,383,378,1,0,0,0,0,128,0,-1--1--1,,1|(2907,1412)|
+1,395,385,378,1,0,0,0,0,128,0,-1--1--1,,1|(2858,1381)|
+10,396,Customer Ramp Demand Change Time Horizon,3175,1323,85,27,8,131,0,2,-1,0,0,0,0-0-0,0-0-0,|||128-0-0,0,0,0,0,0,0
+1,397,396,385,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,398,Final Fraction of Original Customer Purchasing Power,3075,1184,67,27,8,3,0,2,-1,0,0,0,0-0-0,0-0-0,|||128-0-0,0,0,0,0,0,0
+1,399,398,385,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,400,Time of Customer Ramp Demand Change,2882,1179,81,27,8,131,0,2,-1,0,0,0,0-0-0,0-0-0,|||128-0-0,0,0,0,0,0,0
+1,401,400,385,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,402,71,385,1,0,0,0,0,128,0,-1--1--1,,1|(2817,1303)|
+10,403,"SW - Logistic Choice Model in WIP",1602,645,60,27,8,131,0,18,0,0,0,0,0-0-0,0-0-0,||B|128-0-0,0,0,0,0,0,0
+1,404,403,356,1,0,0,0,0,128,0,-1--1--1,,1|(1529,718)|
+1,405,403,12,1,0,0,0,0,128,0,-1--1--1,,1|(1786,745)|
+10,406,Fixed Delay Production,1711,914,48,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,407,7,406,1,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(1466,915)|
+1,408,406,12,1,0,0,0,0,128,0,-1--1--1,,1|(1782,921)|
+10,409,"SW - Logistic Choice Model in WIP",1068,495,56,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,410,409,134,1,0,0,0,0,128,0,-1--1--1,,1|(1091,470)|
+1,411,310,406,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,412,36,117,1,0,0,0,0,64,0,-1--1--1,,1|(1170,1481)|
+10,413,"SW - Age Value Relationship",1454,1492,62,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,414,413,310,1,0,0,0,0,64,0,-1--1--1,,1|(1416,1448)|
+10,415,Initial Average Age of Units under Development,282,1278,83,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,416,WIP Development Costs,257,1399,69,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,417,Reference Development Variable Costs,452,1385,91,20,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,418,415,417,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(369,1315)|
+1,419,416,417,0,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(0,0)|
+1,420,417,282,1,0,0,0,0,128,0,-1--1--1,,1|(529,1432)|
+10,421,Average Age of Units under Development,1356,1812,62,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,422,WIP Development Costs,1236,1845,71,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,423,Producer WIP Development Variable Costs,1141,1728,55,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,424,421,423,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1251,1743)|
+1,425,422,423,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1221,1781)|
+1,426,423,294,1,0,0,0,0,128,0,-1--1--1,,1|(1071,1652)|
+10,427,Linear Effect of unit Age on Producer Price,1598,1408,89,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,428,427,116,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,429,Trapezoidal Effect of Unit Age on Producer Price,1598,1408,80,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,430,429,116,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,431,Asymmetric Gaussian Effect of unit Age on Producer Price,1598,1408,85,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,432,431,116,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,433,Trapezoidal Initial Average Age of Units Under Development,1267,1434,78,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,434,433,310,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,435,Null Assumed Ideal WIP Development Time,1267,1434,74,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,436,435,310,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,437,Linear Initial Average Age of Units Under Development,1267,1434,87,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,438,437,310,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,439,Asymmetric Gaussian Initial Average Age of Units Under Development,1267,1434,98,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,440,439,310,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,441,413,116,1,0,0,0,0,128,0,-1--1--1,,1|(1549,1459)|
+10,442,Linear Expected Price of Selling Unit Held Beyond Current Age,1085,1399,99,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,443,442,117,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,444,Asymmetric Gaussian Expected Price of Selling Unit Held Beyond Current Age,1085,1399,108,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,445,444,117,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,446,Trapezoidal Expected Price of Selling Unit Held Beyond Current Age,1085,1399,91,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,447,446,117,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,448,413,117,1,0,0,0,0,128,0,-1--1--1,,1|(1290,1453)|
+10,449,"SW - Logistic Choice Model in FG",2301,773,78,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||B|128-0-0,0,0,0,0,0,0
+1,450,449,198,1,0,0,0,0,128,0,-1--1--1,,1|(2314,676)|
+1,451,449,363,1,0,0,0,0,128,0,-1--1--1,,1|(2287,803)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Development Time Co-Flow Detail
+$192-192-192,0,Arial|12||0-0-0|0-0-0|0-0-0|-1--1--1|-1--1--1|96,96,90,0
+10,1,"Units under Development (WIP)",828,396,56,29,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,2,48,477,387,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,3,5,1,4,0,0,22,0,0,0,-1--1--1,,1|(663,387)|
+1,4,5,2,100,0,0,22,0,0,0,-1--1--1,,1|(515,387)|
+11,5,0,549,387,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,6,Production Starts,549,419,58,24,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+1,7,8,1,100,0,0,22,0,0,0,-1--1--1,,1|(976,387)|
+11,8,0,1074,387,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,9,FG Production,1074,410,52,15,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,10,Average Age of Units under Development,951,486,146,10,0,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,11,Total Age of Units under Development,809,620,51,22,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+12,12,48,564,618,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,13,15,11,4,0,0,22,0,0,0,-1--1--1,,1|(715,618)|
+1,14,15,12,100,0,0,22,0,0,0,-1--1--1,,1|(617,618)|
+11,15,0,666,618,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,16,Additional Age Gain from New Production,666,650,91,24,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+12,17,48,1080,618,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,18,20,17,4,0,0,22,0,0,0,-1--1--1,,1|(1015,618)|
+1,19,20,11,100,0,0,22,0,0,0,-1--1--1,,1|(904,618)|
+11,20,0,954,618,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,21,Age Loss from FG Production,954,646,61,20,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,22,Avg Age of New Units,490,546,64,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,23,6,15,1,0,43,0,2,64,0,-1--1--1,|||0-0-0,1|(605,507)|
+1,24,22,15,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(627,593)|
+1,25,9,20,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(1071,524)|
+12,26,48,803,462,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,27,29,11,4,0,0,22,0,0,0,-1--1--1,,1|(803,565)|
+1,28,29,26,100,0,0,22,0,0,0,-1--1--1,,1|(803,495)|
+11,29,0,803,527,8,6,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,30,Gain of Maturation,756,527,39,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,31,1,30,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(735,450)|
+10,32,Rate of Maturation Gain,661,444,58,18,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,33,32,30,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(673,494)|
+1,34,1,10,1,0,45,0,2,192,0,-1--1--1,|||0-0-0,1|(905,415)|
+1,35,11,10,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(903,557)|
+1,36,10,20,1,0,43,0,2,192,0,-1--1--1,|||0-0-0,1|(970,543)|
+10,37,Expected Needed Production,1171,434,65,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,38,37,9,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,39,Maximum Production Rate,1171,434,64,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,40,39,9,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,41,Producer Processing Time,809,241,59,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,42,Desired Units to Dispose of,809,241,64,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,43,Initial Total Age of Unit under Development,798,642,64,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,44,43,11,0,1,0,0,0,64,1,-1--1--1,,1|(0,0)|
+10,45,Initial Units under Development,858,427,54,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,46,45,1,0,1,0,0,0,64,1,-1--1--1,,1|(0,0)|
+10,47,Time to adjust Production Schedule,427,436,71,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,48,47,6,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,49,Production Capacity under Utilization,427,436,46,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,50,49,6,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,51,Average Producer Capacity Yield,427,436,57,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,52,51,6,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+12,53,48,1148,387,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,54,8,53,4,0,0,22,0,0,0,-1--1--1,,1|(1109,387)|
+10,55,Age Loss from WIP Destruction,809,660,68,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,56,55,11,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,57,Disposal of Units under Development,812,429,76,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,58,57,1,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+12,59,48,820,192,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,60,61,59,4,0,0,22,0,0,0,-1--1--1,,1|(823,231)|
+11,61,0,823,269,8,6,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,62,Disposal of Units under Development,746,269,69,34,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,63,Desired Units to Dispose of,725,169,59,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,64,63,62,1,0,43,0,2,64,0,-1--1--1,|||0-0-0,1|(726,208)|
+10,65,Producer Processing Time,941,208,62,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,66,65,61,1,0,45,0,2,64,0,-1--1--1,|||0-0-0,1|(886,258)|
+1,67,61,1,100,0,0,22,0,0,0,-1--1--1,,1|(823,321)|
+1,68,1,63,1,0,43,0,2,0,0,-1--1--1,|||0-0-0,1|(673,292)|
+12,69,0,539,84,73,32,3,135,0,28,-1,0,1,0,-1--1--1,192-192-192,|14|B|0-0-0,0,0,0,0,0,0
+Return to Dashboard
+10,70,"SW - Logistic Choice Model in WIP",746,321,60,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,71,70,62,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,72,Desired Units Fraction Disposed,725,205,73,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,73,72,63,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,74,"SW - Logistic Choice Model in WIP",1074,443,60,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,75,74,9,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,76,Fixed Delay Production,1074,443,49,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,77,76,9,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Age Value Relationships
+$192-192-192,0,Arial|12||0-0-0|0-0-0|0-0-0|-1--1--1|255-255-255|96,96,70,0
+10,1,C Maximum Age at Full Value,592,412,66,23,8,131,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,2,Effect of Unit Age on Producer Price,944,1081,73,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,3,Expected Price of Selling Unit Held Beyond Current Age,965,777,93,34,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,4,B Minimum Age at Full Value,566,314,61,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,5,A Minimum age of any Value,655,145,69,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,6,D Maximum age of any Value,815,153,63,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,7,Initial Average Age of Units under Development,932,1369,68,25,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,8,"SW - Age Value Relationship",460,1001,59,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||B|128-0-0,0,0,0,0,0,0
+10,9,"Producer Short-Run Expected Price",831,437,73,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,10,Average Age of Units under Development,831,437,62,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+12,11,0,386,46,139,27,8,135,0,24,-1,0,0,0,-1--1--1,0-0-0,|16|BU|0-0-0,0,0,0,0,0,0
+Trapezoidal Relationship
+10,12,Trapezoidal Effect of Unit Age on Producer Price,759,296,79,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,13,Trapezoidal Initial Average Age of Units Under Development,456,368,77,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,14,Trapezoidal Expected Price of Selling Unit Held Beyond Current Age,332,516,91,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,15,4,12,1,0,0,0,0,128,0,-1--1--1,,1|(656,286)|
+1,16,4,13,1,0,0,0,0,128,0,-1--1--1,,1|(487,340)|
+1,17,1,12,1,0,0,0,0,128,0,-1--1--1,,1|(698,370)|
+1,18,5,12,1,0,0,0,0,128,0,-1--1--1,,1|(720,215)|
+1,19,6,12,1,0,0,0,0,128,0,-1--1--1,,1|(780,232)|
+10,20,Average Age of Units under Development,488,143,62,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,21,20,12,1,0,0,0,0,128,0,-1--1--1,,1|(631,233)|
+1,22,12,14,1,0,0,0,0,128,0,-1--1--1,,1|(737,455)|
+10,23,Average Age of Units under Development,1132,1000,62,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,24,Trapezoidal Expected Price of Selling Unit Held Beyond Current Age,1270,697,102,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,25,Trapezoidal Effect of Unit Age on Producer Price,1204,983,80,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,26,Trapezoidal Initial Average Age of Units Under Development,1232,1287,78,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,27,24,3,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+1,28,25,2,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+1,29,26,7,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+12,30,0,1229,61,117,29,8,135,0,24,-1,0,0,0,-1--1--1,0-0-0,|16|BU|0-0-0,0,0,0,0,0,0
+Asymmetric Gaussian
+10,31,Ideal Development Time,1290,402,72,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,32,"Lower Price-Value St Dev",1410,164,68,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,33,"Upper Price-Value St Dev",1425,274,70,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,34,Average Age of Units under Development,1183,179,62,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,35,Asymmetric Gaussian Effect of unit Age on Producer Price,1117,335,80,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,36,34,35,1,0,0,0,0,128,0,-1--1--1,,1|(1136,256)|
+1,37,32,35,1,0,0,0,0,128,0,-1--1--1,,1|(1251,221)|
+1,38,33,35,1,0,0,0,0,128,0,-1--1--1,,1|(1275,344)|
+1,39,31,35,1,0,0,0,0,128,0,-1--1--1,,1|(1212,400)|
+10,40,Asymmetric Gaussian Effect of unit Age on Producer Price,1196,1081,85,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,41,40,2,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+1,42,8,2,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+12,43,0,1946,913,275,197,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+Phase_Plot_-_Effect_on_Price_vs_Average_Maturation_Time
+10,44,Asymmetric Gaussian Initial Average Age of Units Under Development,1486,356,102,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,45,31,44,1,0,0,0,0,128,0,-1--1--1,,1|(1369,367)|
+10,46,Asymmetric Gaussian Expected Price of Selling Unit Held Beyond Current Age,1229,510,116,36,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,47,31,46,1,0,0,0,0,128,0,-1--1--1,,1|(1285,427)|
+1,48,35,46,1,0,0,0,0,128,0,-1--1--1,,1|(1155,401)|
+1,49,34,46,1,0,0,0,0,128,0,-1--1--1,,1|(969,352)|
+10,50,Asymmetric Gaussian Expected Price of Selling Unit Held Beyond Current Age,1274,810,108,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,51,Asymmetric Gaussian Initial Average Age of Units Under Development,1223,1428,98,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,52,51,7,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+1,53,50,3,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+1,54,8,3,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+1,55,8,7,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+10,56,"Producer Short-Run Expected Price",1495,757,73,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,57,56,3,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+10,58,Null Assumed Ideal WIP Development Time,1373,1371,87,25,8,131,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+1,59,58,7,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+12,60,0,1947,1335,275,197,3,188,0,0,1,0,0,0,0,0,0,0,0,0
+Demand
+12,61,0,1894,59,103,21,8,135,0,24,-1,0,0,0,-1--1--1,0-0-0,|16|BU|0-0-0,0,0,0,0,0,0
+Linear Saturating
+10,62,Average Age of Units under Development,1836,153,62,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,63,Linear Effect of unit Age on Producer Price,1842,320,84,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,64,62,63,1,0,0,0,0,128,0,-1--1--1,,1|(1815,196)|
+10,65,Linear Initial Average Age of Units Under Development,1956,500,77,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,66,Linear Expected Price of Selling Unit Held Beyond Current Age,1703,513,96,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,67,62,66,1,0,0,0,0,128,0,-1--1--1,,1|(1716,239)|
+10,68,Linear Expected Price of Selling Unit Held Beyond Current Age,1212,879,99,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,69,Linear Effect of unit Age on Producer Price,1165,1160,75,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,70,Linear Initial Average Age of Units Under Development,1187,1507,82,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,71,68,3,1,0,0,0,0,128,0,-1--1--1,,1|(1085,864)|
+1,72,69,2,1,0,0,0,0,128,0,-1--1--1,,1|(1039,1153)|
+1,73,70,7,1,0,0,0,0,128,0,-1--1--1,,1|(1019,1467)|
+10,74,REFERENCE PRODUCER PRICE,447,664,80,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,75,4,14,1,0,0,0,0,128,0,-1--1--1,,1|(499,469)|
+10,76,REFERENCE PRODUCER PRICE,1438,604,80,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,77,REFERENCE PRODUCER PRICE,1926,619,80,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,78,"Producer Short-Run Expected Price",1703,558,73,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,79,WIP Development Costs,469,241,71,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,80,20,14,1,0,0,0,0,128,0,-1--1--1,,1|(332,215)|
+1,81,79,14,1,0,0,0,0,128,0,-1--1--1,,1|(379,341)|
+1,82,13,14,1,0,0,0,0,128,0,-1--1--1,,1|(436,452)|
+10,83,WIP Development Costs,1043,591,71,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,84,WIP Development Costs,1743,384,71,18,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,85,83,46,1,0,0,0,0,128,0,-1--1--1,,1|(1163,568)|
+1,86,84,66,1,0,0,0,0,128,0,-1--1--1,,1|(1721,445)|
+1,87,44,46,1,0,0,0,0,128,0,-1--1--1,,1|(1418,462)|
+1,88,65,66,1,0,0,0,0,128,0,-1--1--1,,1|(1835,535)|
+1,89,63,66,1,0,0,0,0,128,0,-1--1--1,,1|(1835,391)|
+10,90,"Producer Short-Run Expected Price",1654,646,73,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,91,"Linear - Minimum Age of Any Value",2137,275,73,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+10,92,"Linear - Age of Full Value",2076,352,73,19,8,3,0,18,0,0,0,0,0-0-0,0-0-0,||I|128-0-64,0,0,0,0,0,0
+1,93,91,63,1,0,0,0,0,128,0,-1--1--1,,1|(1922,278)|
+1,94,92,63,1,0,0,0,0,128,0,-1--1--1,,1|(1995,358)|
+1,95,92,65,1,0,0,0,0,128,0,-1--1--1,,1|(2049,449)|
+1,96,92,66,1,0,0,0,0,128,0,-1--1--1,,1|(1874,451)|
+10,97,"Producer Short-Run Expected Price",225,692,73,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,98,90,66,1,0,0,0,0,128,0,-1--1--1,,1|(1641,590)|
+10,99,"SW - Switch for Pulse in Customer Purchases",457,898,63,34,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,100,97,14,1,0,0,0,0,128,0,-1--1--1,,1|(249,617)|
+10,101,"Producer Short-Run Expected Price",1488,541,73,27,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,102,101,46,1,0,0,0,0,128,0,-1--1--1,,1|(1349,556)|
+12,103,0,131,42,73,32,3,135,0,28,-1,0,1,0,-1--1--1,192-192-192,|14|B|0-0-0,0,0,0,0,0,0
+Return to Dashboard
+1,104,1,13,1,0,0,0,0,128,0,-1--1--1,,1|(477,415)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Reporting Structures
+$192-192-192,0,Arial|12||0-0-0|0-0-0|0-0-0|-1--1--1|255-255-255|96,96,60,0
+11,1,0,851,216,8,6,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,2,Disposal of Units under Development,772,216,71,18,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+11,3,0,1126,224,8,6,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,4,Disposal of Producer Finished Goods Inventory,1239,224,105,27,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+11,5,0,1056,216,8,6,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,6,Decay of Producer Stored Goods,979,216,69,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,7,Average Shelf Life of Producer Stored Goods,1185,321,81,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,8,7,6,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,9,Producer Finished Goods Inventory,1185,321,72,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,10,9,6,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,11,Desired Inventory to Dispose of,1450,307,68,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,12,11,4,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,13,Producer finished goods disposal time,1450,307,79,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,14,13,4,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,15,"SW - Logistic Choice Model in FG",1450,307,78,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,16,15,4,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,17,"SW - Logistic Choice Model in WIP",769,273,60,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,18,17,2,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,19,Producer Processing Time,769,273,67,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,20,19,2,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,21,Desired Units to Dispose of,769,273,64,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,22,21,2,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,23,Total Loss of Production,984,408,47,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,24,2,23,1,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(808,280)|
+1,25,6,23,0,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(0,0)|
+1,26,4,23,1,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(1146,332)|
+11,27,0,1737,524,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,28,Shipping to Customer,1737,550,42,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,29,Producer Spot Price,1890,372,49,25,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+10,30,Producer Fullfillment Ratio,2260,316,65,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,31,30,28,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,32,Customer Demand,2260,316,41,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,33,32,28,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,34,Producer Spot Price for Full Matured Goods,1334,967,88,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,35,34,29,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,36,Effect of Unit Age on Producer Price,1334,967,71,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,37,36,29,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,38,Producer Revenue,1910,528,50,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,39,29,38,1,0,0,0,0,128,0,-1--1--1,,1|(1920,479)|
+1,40,28,38,1,0,0,0,0,128,0,-1--1--1,,1|(1841,548)|
+10,41,Total Cummulative Revenue,1909,659,55,25,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,42,38,41,1,0,0,0,0,128,0,-1--1--1,,1|(1919,575)|
+10,43,Producer Observed Mixed Variable Costs,1610,356,79,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,44,Producer Variable Cost for Disposed Crops,1328,1051,72,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,45,44,43,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,46,Producer Variable Cost for Disposed Finished Goods,1328,1051,91,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,47,46,43,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,48,Producer Variable Costs for Sold Goods,1328,1051,84,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,49,48,43,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,50,Producer WIP Development Variable Costs,1328,1051,82,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,51,50,43,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,52,Reference Mixed Variable Costs,1328,1051,67,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,53,52,43,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,54,2,43,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,55,4,43,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,56,Average Producer Capacity Yield,1603,418,72,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,57,Production Capacity under Utilization,1603,418,56,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,58,Time to adjust Production Schedule,1603,418,81,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,59,Production Starts,1448,407,45,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,60,59,43,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,61,Production Starts,1631,512,45,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,62,Producer Unit Profit,1683,442,50,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,63,43,62,1,0,0,0,0,128,0,-1--1--1,,1|(1619,391)|
+1,64,29,62,1,0,0,0,0,128,0,-1--1--1,,1|(1792,431)|
+10,65,Producer Allocated Costs,1587,522,63,22,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,66,62,65,1,0,0,0,0,128,0,-1--1--1,,1|(1613,488)|
+1,67,28,65,1,0,0,0,0,128,0,-1--1--1,,1|(1663,543)|
+10,68,Total Cummulative Allocated Costs,1582,669,57,28,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,69,65,68,1,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(1572,585)|
+10,70,Total Producer Profit,1751,810,48,27,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,71,41,70,1,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(1879,755)|
+10,72,Producer Observed Fully Allocated Gross Margin,1753,297,79,27,8,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,73,43,72,1,0,0,0,0,128,0,-1--1--1,,1|(1643,307)|
+1,74,29,72,1,0,0,0,0,128,0,-1--1--1,,1|(1888,347)|
+11,75,0,1111,942,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,76,Production Starts,1111,968,86,18,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,77,Time to adjust Production Schedule,1275,603,81,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,78,77,76,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,79,Production Capacity under Utilization,1275,603,56,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,80,79,76,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,81,Average Producer Capacity Yield,1275,603,72,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,82,81,76,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,83,Producer Shipping Costs,1310,596,57,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,84,Producer Cost to Place in FG State,899,702,65,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,85,Producer Cost to Dispose of or Abandon WIP,858,649,73,27,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,86,Producer Cost to Destory Inventory,981,747,62,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,87,Producer Raw Material Costs,1175,594,54,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,88,WIP Development Costs,1037,596,66,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,89,"Units under Development (WIP)",946,951,60,24,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+11,90,0,795,917,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,91,Shipping to Customer,795,951,69,26,40,130,0,0,-1,0,0,0,0,0,0,0,0,0
+11,92,0,883,832,8,6,33,3,0,0,2,0,0,0,0,0,0,0,0,0
+10,93,Disposal of Units under Development,804,832,71,18,40,130,0,0,-1,0,0,0,0,0,0,0,0,0
+11,94,0,1251,963,8,6,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,95,Disposal of Producer Finished Goods Inventory,1364,963,105,27,40,2,0,0,-1,0,0,0,0,0,0,0,0,0
+10,96,FG Production,626,1095,45,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,97,96,89,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,98,Initial Units under Development,626,1095,67,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,99,98,89,0,1,0,0,0,64,1,-1--1--1,,1|(0,0)|
+1,100,2,89,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,101,76,89,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,102,Producer Realized Costs,1251,811,56,18,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,103,85,102,1,0,0,0,0,128,0,-1--1--1,,1|(1081,672)|
+1,104,84,102,1,0,0,0,0,128,0,-1--1--1,,1|(1083,709)|
+1,105,87,102,1,0,0,0,0,128,0,-1--1--1,,1|(1241,728)|
+1,106,83,102,1,0,0,0,0,128,0,-1--1--1,,1|(1316,669)|
+1,107,86,102,1,0,0,0,0,128,0,-1--1--1,,1|(1053,730)|
+1,108,93,102,1,0,0,0,0,128,0,-1--1--1,,1|(1041,788)|
+1,109,76,102,1,0,0,0,0,128,0,-1--1--1,,1|(1161,894)|
+1,110,95,102,1,0,0,0,0,128,0,-1--1--1,,1|(1280,859)|
+1,111,91,102,1,0,0,0,0,128,0,-1--1--1,,1|(920,883)|
+1,112,89,102,0,0,0,0,0,128,0,-1--1--1,,1|(0,0)|
+1,113,88,102,1,0,0,0,0,128,0,-1--1--1,,1|(1095,622)|
+11,114,0,1161,1014,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,115,FG Production,1161,1037,52,15,40,131,0,0,-1,0,0,0,0,0,0,0,0,0
+10,116,Expected Needed Production,1334,791,45,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,117,116,115,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,118,Fixed Delay Production,1334,791,49,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,119,118,115,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,120,Maximum Production Rate,1334,791,64,18,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,121,120,115,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,122,"SW - Logistic Choice Model in WIP",1334,791,60,27,8,2,1,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,123,122,115,0,1,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,124,115,102,1,0,0,0,0,128,0,-1--1--1,,1|(1221,980)|
+10,125,Total Cummulative Realized Costs,1507,779,59,34,3,131,0,0,0,0,0,0,0,0,0,0,0,0
+1,126,102,125,1,0,43,0,2,128,0,-1--1--1,|||0-0-0,1|(1382,809)|
+1,127,125,70,1,0,45,0,2,128,0,-1--1--1,|||0-0-0,1|(1613,865)|
+12,128,0,583,211,73,32,3,135,0,28,-1,0,1,0,-1--1--1,192-192-192,|14|B|0-0-0,0,0,0,0,0,0
+Return to Dashboard
+///---\\\
+:GRAPH Inventories
+:TITLE Inventories
+:SCALE
+:VAR "Units under Development (WIP)"|WIP
+:LINE-WIDTH 2
+:VAR Producer Finished Goods Inventory|Finished Goods
+:LINE-WIDTH 2
+
+:GRAPH Spot_Prices
+:TITLE Spot Prices
+:SCALE
+:VAR Producer Spot Price|Spot Price
+:LINE-WIDTH 2
+
+:GRAPH Demand
+:TITLE Demand and Production
+:SCALE
+:VAR Production Starts|Production Starts
+:LINE-WIDTH 2
+:VAR Customer Demand|Price Affected Customer Demand
+:LINE-WIDTH 2
+:VAR Underlying Customer Demand|Underlying Customer Demand
+:LINE-WIDTH 2
+
+:GRAPH Fullfillment
+:TITLE Fullfillment Ratios
+:SCALE
+:VAR Producer Fullfillment Ratio|Producer Fullfillment
+:LINE-WIDTH 2
+
+:GRAPH Gross_Margin
+:TITLE Realized Average Gross Margin
+:SCALE
+:VAR Expected Producer Variable GM|Producer Expected GM
+:Y-MIN 0
+:LINE-WIDTH 2
+:VAR Producer Observed Fully Allocated Gross Margin|Producer Observed GM
+:LINE-WIDTH 2
+
+:GRAPH Disposal_of_Food
+:TITLE Disposal of Units
+:SCALE
+:VAR Disposal of Units under Development|Disposal of WIP
+:LINE-WIDTH 2
+:VAR Disposal of Producer Finished Goods Inventory|Disposal of FG
+:LINE-WIDTH 2
+:VAR Decay of Producer Stored Goods|Spoilage of FG
+:LINE-WIDTH 2
+
+:GRAPH Crop_Fractions_Disposed_Held_Harvested
+:TITLE Producer Crop Dispositions
+:STACK-FILL 0
+:SCALE
+:VAR Desired Units Fraction Disposed|WIP Fraction Disposed
+:VAR Desired Units Fraction Held in WIP|WIP Fraction Held
+:VAR Desired Units Fraction to Move to FG|WIP Fraction moved to FG
+
+:GRAPH Producer_Inventory_Fractions_Disposed_Held_Shipped
+:TITLE Producer Inventory Dispositions
+:STACK-FILL 0
+:SCALE
+:VAR Desired Fraction of Inventory Disposed|FG Inventory Fraction Disposed
+:VAR Desired Fraction of Inventory Held Back|FG Inventory Fraction Held Back
+:VAR Desired Fraction of Inventory Available to Customer|FG Inventory Fraction Available to Ship
+
+:GRAPH Producer_Actual_Spot_Price_vs_Full_Spot_Price
+:TITLE Producer Actual Spot Price & Full Spot Price
+:SCALE
+:VAR Producer Spot Price|Actual Spot Price
+:LINE-WIDTH 2
+:VAR Producer Spot Price for Full Matured Goods|Spot Price for Fully Mature Goods
+:LINE-WIDTH 2
+
+:GRAPH WIP_Maturation
+:TITLE Unit Maturation Times
+:SCALE
+:VAR Average Age of Units under Development|Average WIP Age
+:LINE-WIDTH 2
+:VAR B Minimum Age at Full Value|Minimum Age at Full Value
+:LINE-WIDTH 2
+:VAR C Maximum Age at Full Value|Maximum Age at Full Value
+:LINE-WIDTH 2
+
+:GRAPH Phase_Plot_-_Effect_on_Price_vs_Average_Maturation_Time
+:TITLE Effect on Price vs Average Maturation Time
+:X-AXIS Average Age of Units under Development
+:X-MIN 0
+:SCALE
+:VAR Effect of Unit Age on Producer Price
+:Y-MIN 0
+:Y-MAX 1
+:LINE-WIDTH 2
+
+:GRAPH Capacity_Utilization_CDF
+:TITLE Capacity Utilization CDF
+:X-AXIS Producer Variable GM Ratio
+:X-MIN 0
+:SCALE
+:VAR Capacitiy Utilization
+:Y-MIN 0
+:Y-MAX 1
+:LINE-WIDTH 2
+
+:GRAPH Profitability
+:TITLE Profitability
+:SCALE
+:VAR Total Producer Profit|Cummulative Profit
+:LINE-WIDTH 2
+:L<%^E!@
+4:Time
+5:FINAL TIME
+9:Pulse Change - MNL with Age Value
+19:60,0
+24:0
+25:200
+26:200
+57:1
+54:0
+55:0
+82:0
+86:0
+59:0
+56:0
+58:0
+71:0
+44:65001
+46:0
+45:5
+49:1
+50:0
+51:
+52:
+53:
+43:Cross Demand Bulk Pulse 20 Pooled Supply and Demand
+47:Scenario 1+2 - Customer and Bulk Demand Drop
+48:C:\Users\jpaine\OneDrive\MIT\Unit Supply Chain Model\POMS Submission\Figures\PooledDemand_Save_List.lst
+22:$,Dollar,Dollars,$s
+22:Day,Days
+22:Employee,Employees
+22:Hectare,Hectares
+22:Hour,Hours
+22:Month,Months
+22:Person,People,Persons
+22:Task,Tasks
+22:Unit,Units
+22:Week,Weeks
+22:Year,Years
+15:0,0,0,4,0,0
+27:0,
+34:0,
+42:1
+72:0
+73:0
+35:Date
+36:YYYY-MM-DD
+37:2000
+38:1
+39:1
+40:3
+41:0
+95:0
+96:0
+97:0
+77:1
+78:0
+102:0
+93:0
+94:0
+92:0
+91:0
+90:0
+87:0
+75:
+43:Cross Demand Bulk Pulse 20 Pooled Supply and Demand
+103:8,8,8,3,8
